@@ -16,7 +16,7 @@
     <name>MultiBranch Action Triggers Plugin</name>
     <description>Enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch Pipeline Job.
     </description>
-    <url></url>
+    <url>https://wiki.jenkins.io/display/JENKINS/MultiBranch+Actions+Trigger+Plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -30,6 +30,12 @@
             <email>aytuncbeken.ab@gmail.com</email>
         </developer>
     </developers>
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/multibranch-action-triggers-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/multibranch-action-triggers-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/multibranch-action-triggers-plugin</url>
+    </scm>
+
     <properties>
         <java.level>8</java.level>
         <java.version>1.8</java.version>
