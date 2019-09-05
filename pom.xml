@@ -9,7 +9,7 @@
     </parent>
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>multibranch-action-triggers</artifactId>
-    <version>1.1</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>MultiBranch Action Triggers Plugin</name>
     <description>Enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch Pipeline Job.
@@ -32,7 +32,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/multibranch-action-triggers-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/multibranch-action-triggers-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/multibranch-action-triggers-plugin</url>
-      <tag>multibranch-action-triggers-1.1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <properties>
