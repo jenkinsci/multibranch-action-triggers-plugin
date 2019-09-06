@@ -21,14 +21,17 @@ How It Works
 2. Create your Jobs (Pipeline/FreeStyle) which will be triggered. You can define any name for your jobs.
 
    Example screenshot:
+   
    ![1](./images/matp1.png)
    
    Example screenshot:
+   
    ![2](./images/matp2.png)
 
 3. Create your Multi Branch Pipeline 
 
     Example screenshot:
+    
     ![3](./images/matp3.png)
 
 4. Define "Pipeline Action Triggers" Jobs at the bottom of the configuration page of the Multi Branch Pipeline.
@@ -37,9 +40,11 @@ How It Works
     - Do not forget to save configuration.
     
     Example screenshot:
+    
     ![4](./images/matp4.png)
     
     Example screenshot:
+    
     ![5](./images/matp5.png)
 
 5. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
@@ -51,6 +56,7 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     - You can use this variable for your needs in your scripts/pipelines.
     
     Example screenshot:
+    
     ![6](./images/matp6.png)
     
 Reporting Issues
