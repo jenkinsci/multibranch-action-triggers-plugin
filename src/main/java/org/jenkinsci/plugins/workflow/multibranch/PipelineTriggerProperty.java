@@ -184,7 +184,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
          */
         private AutoCompletionCandidates autoCompleteCandidates(String value) {
             AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-            List<Job> jobs = Jenkins.getInstance().getItems(Job.class);
+            List<Job> jobs = Jenkins.getInstance().getAllItems(Job.class);
             for (Job job : jobs) {
                 String jobName = job.getFullName();
                 if (jobName.contains(value.trim()) && job.hasPermission(Item.BUILD) && job.hasPermission(Item.READ))

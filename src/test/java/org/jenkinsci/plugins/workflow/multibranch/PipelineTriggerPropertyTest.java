@@ -1,7 +1,9 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import com.cloudbees.hudson.plugins.folder.Folder;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Job;
 import hudson.util.RunList;
 import jenkins.branch.BranchSource;
 import jenkins.plugins.git.GitSCMSource;
@@ -10,9 +12,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockFolder;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
@@ -23,12 +28,12 @@ public class PipelineTriggerPropertyTest {
     @Rule
     public GitSampleRepoRule gitRepo = new GitSampleRepoRule();
 
-    private String pipelineScript = "pipeline { agent any; stages { stage('Test') { steps { echo test } } } }";
+    private String pipelineScript = "//No Content Necessary";
     private String pipelineFile = "Jenkinsfile";
-    private String projectName = "PipelineTriggerPropertyTestJob";
     private String createTriggerJobName = "CreateTriggerJob";
     private String deleteTriggerJobName = "DeleteTriggerJob";
     private String additionalBranchName = "feature";
+    private String triggerFolderName = "TriggerFolder";
 
     private int expectedBuildNumPerJob = 2;
     private int expectedPipelineCount = 2;
@@ -40,16 +45,34 @@ public class PipelineTriggerPropertyTest {
     }
 
     @Test
-    public void pipelineTriggerPropertyTest() throws Exception {
+    public void testPipelineTriggerPropertyWithFreeStyleJobs() throws Exception {
 
         //Create Free Style Jobs for Testing Trigger
         FreeStyleProject createTriggerJob = jenkins.createFreeStyleProject(this.createTriggerJobName);
         FreeStyleProject deleteTriggerJob = jenkins.createFreeStyleProject(this.deleteTriggerJobName);
 
+        //Create WorkflowMultiBranch Job and Test
+        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob);
+    }
+
+    @Test
+    public void testPipelineTriggerPropertyWithFreeStyleJobsInFolder() throws Exception {
+
+        MockFolder triggerFolder = jenkins.createFolder(this.triggerFolderName);
+        FreeStyleProject createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.createTriggerJobName);
+        FreeStyleProject deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteTriggerJobName);
+
+        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob,deleteTriggerJob);
+
+
+    }
+
+    private void createWorkflowMultiBranchJobWithTriggers(Job createTriggerJob, Job deleteTriggerJob) throws Exception {
+
         //Create Multi Branch Pipeline Job with Git Repo
-        WorkflowMultiBranchProject workflowMultiBranchProject = this.jenkins.createProject(WorkflowMultiBranchProject.class, this.projectName);
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.jenkins.createProject(WorkflowMultiBranchProject.class, UUID.randomUUID().toString());
         workflowMultiBranchProject.getSourcesList().add(new BranchSource(new GitSCMSource(null, this.gitRepo.toString(), "", "*", "", false)));
-        workflowMultiBranchProject.getProperties().add(new PipelineTriggerProperty(createTriggerJobName, deleteTriggerJobName));
+        workflowMultiBranchProject.getProperties().add(new PipelineTriggerProperty(createTriggerJob.getFullName(), deleteTriggerJob.getFullName()));
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
 
@@ -64,7 +87,6 @@ public class PipelineTriggerPropertyTest {
 
         //Test Post Trigger Jobs
         this.checkTriggeredJobs(deleteTriggerJob);
-
     }
 
     private void indexMultiBranchPipeline(WorkflowMultiBranchProject workflowMultiBranchProject, int expectedPipelineCount) throws Exception {
@@ -81,7 +103,7 @@ public class PipelineTriggerPropertyTest {
         this.gitRepo.git("checkout", "-b", this.additionalBranchName);
     }
 
-    private void checkTriggeredJobs(FreeStyleProject triggeredJob) throws Exception {
+    private void checkTriggeredJobs(Job triggeredJob) throws Exception {
         RunList<FreeStyleBuild> builds = triggeredJob.getBuilds();
         assertEquals(this.expectedBuildNumPerJob, builds.size());
         Iterator<FreeStyleBuild> iterator = builds.iterator();
