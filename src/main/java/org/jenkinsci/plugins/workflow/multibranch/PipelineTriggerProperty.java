@@ -66,7 +66,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      */
     @DataBoundSetter
     public void setCreateActionJobsToTrigger(String createActionJobsToTrigger) {
-        this.setCreateActionJobs(this.validateJobs(createActionJobsToTrigger, true));
+        this.setCreateActionJobs(this.validateJobs(createActionJobsToTrigger));
         this.createActionJobsToTrigger = this.convertJobsToCommaSeparatedString(this.getCreateActionJobs());
     }
 
@@ -87,7 +87,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      */
     @DataBoundSetter
     public void setDeleteActionJobsToTrigger(String deleteActionJobsToTrigger) {
-        this.setDeleteActionJobs(this.validateJobs(deleteActionJobsToTrigger, true));
+        this.setDeleteActionJobs(this.validateJobs(deleteActionJobsToTrigger));
         this.deleteActionJobsToTrigger = this.convertJobsToCommaSeparatedString(this.getDeleteActionJobs());
     }
 
@@ -199,10 +199,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      * Additionally, create StringParameterDefinition in Jobs to pass @projectNameParameterKey as build value.
      *
      * @param actionJobsToTrigger                 Full names of the Jobs in comma-separated format which are defined in the field
-     * @param addSourceProjectNameStringParameter If set True, create StringParameterDefinition in Job
      * @return List of Job
      */
-    private List<Job> validateJobs(String actionJobsToTrigger, boolean addSourceProjectNameStringParameter) {
+    private List<Job> validateJobs(String actionJobsToTrigger) {
         List<Job> jobs = Jenkins.getInstance().getAllItems(Job.class);
         List<Job> validatedJobs = new ArrayList<>();
         StringTokenizer tokenizer = new StringTokenizer(Util.fixNull(Util.fixEmptyAndTrim(actionJobsToTrigger)), ",");
@@ -210,19 +209,38 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             String tokenJobName = tokenizer.nextToken();
             for (Job job : jobs) {
                 if (job.getFullName().trim().equals(tokenJobName.trim())) {
-                    if (addSourceProjectNameStringParameter) {
-                        //Try to add job property. If fails do not stop just log warning.
-                        try {
+                    //Try to add job property. If fails do not stop just log warning.
+                    try {
+                        if (checkJobHasSetParameter(job)){
+                        } else {
                             job.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition(PipelineTriggerProperty.projectNameParameterKey, "", "Added by Multibranch Pipeline Plugin")));
-                        } catch (Exception ex) {
-                            LOGGER.log(Level.WARNING, "Could not set String Parameter Definition. This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
+                            job.save();
                         }
+                    } catch (Exception ex) {
+                        LOGGER.log(Level.WARNING, "Could not set String Parameter Definition. This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
                     }
                     validatedJobs.add(job);
                 }
             }
         }
         return validatedJobs;
+    }
+
+    /**
+     * Check if the job has set the parameter
+     * @param job The Job to check
+     * @return
+     */
+    private static boolean checkJobHasSetParameter(Job job) {
+        List<JobProperty> allProperties = job.getAllProperties();
+        for (JobProperty property: allProperties){
+            if (property instanceof ParametersDefinitionProperty &&
+                    ((ParametersDefinitionProperty) property).
+                            getParameterDefinition(PipelineTriggerProperty.projectNameParameterKey) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -243,7 +261,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                    Also this value will be passed as StringParameterDefinition
      */
     public void buildCreateActionJobs(String projectName) {
-        this.buildJobs(projectName, this.validateJobs(this.getCreateActionJobsToTrigger(), false));
+        this.buildJobs(projectName, this.validateJobs(this.getCreateActionJobsToTrigger()));
     }
 
     /**
@@ -253,7 +271,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                    Also this value will be passed as StringParameterDefinition
      */
     public void buildDeleteActionJobs(String projectName) {
-        this.buildJobs(projectName, this.validateJobs(this.getDeleteActionJobsToTrigger(), false));
+        this.buildJobs(projectName, this.validateJobs(this.getDeleteActionJobsToTrigger()));
     }
 
 
