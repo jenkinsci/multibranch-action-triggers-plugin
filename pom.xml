@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>3.25</version>
-        <relativePath/>
+        <relativePath />
     </parent>
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>multibranch-action-triggers</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <packaging>hpi</packaging>
     <name>MultiBranch Action Triggers Plugin</name>
     <description>Enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch
@@ -35,7 +34,7 @@
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/multibranch-action-triggers-plugin.git
         </developerConnection>
         <url>https://github.com/jenkinsci/multibranch-action-triggers-plugin</url>
-        <tag>HEAD</tag>
+        <tag>multibranch-action-triggers-1.4</tag>
     </scm>
 
     <properties>
