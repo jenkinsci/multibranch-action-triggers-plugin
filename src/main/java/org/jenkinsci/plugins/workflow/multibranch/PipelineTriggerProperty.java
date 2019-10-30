@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +38,8 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     private transient List<Job> deleteActionJobs;
     private final int quitePeriod = 0;
     static final String projectNameParameterKey = "SOURCE_PROJECT_NAME";
+    private String branchIncludeFilter;
+    private String branchExcludeFilter;
 
     /**
      * @param createActionJobsToTrigger  Full names of the jobs in comma separated format which are defined in the field
@@ -44,9 +47,11 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      * @see DataBoundConstructor
      */
     @DataBoundConstructor
-    public PipelineTriggerProperty(String createActionJobsToTrigger, String deleteActionJobsToTrigger) {
+    public PipelineTriggerProperty(String createActionJobsToTrigger, String deleteActionJobsToTrigger, String branchIncludeFilter, String branchExcludeFilter) {
         this.setCreateActionJobsToTrigger(createActionJobsToTrigger);
         this.setDeleteActionJobsToTrigger(deleteActionJobsToTrigger);
+        this.setBranchIncludeFilter(branchIncludeFilter);
+        this.setBranchExcludeFilter(branchExcludeFilter);
     }
 
     /**
@@ -217,7 +222,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                             job.save();
                         }
                     } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "Could not set String Parameter Definition. This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
+                        LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definition. This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
                     }
                     validatedJobs.add(job);
                 }
@@ -299,16 +304,25 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     private static void triggerActionJobs(WorkflowJob workflowJob, PipelineTriggerBuildAction action) {
         if( !( workflowJob.getParent()  instanceof WorkflowMultiBranchProject)  ) {
-            LOGGER.log(Level.WARNING,"Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
+            LOGGER.log(Level.WARNING,"[MultiBranch Action Triggers Plugin] Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
             return;
         }
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) workflowJob.getParent();
         PipelineTriggerProperty pipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
-        if( pipelineTriggerProperty != null)
-            if( action.equals(PipelineTriggerBuildAction.createPipelineAction))
-                pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName());
-            else if (action.equals(PipelineTriggerBuildAction.deletePipelineAction))
-                pipelineTriggerProperty.buildDeleteActionJobs(workflowJob.getName());
+        if( pipelineTriggerProperty != null) {
+            if ( checkExcludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
+                LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] {0} excluded by the Exclude Filter", workflowJob.getName());
+            }
+            else if( checkIncludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
+                if (action.equals(PipelineTriggerBuildAction.createPipelineAction))
+                    pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName());
+                else if (action.equals(PipelineTriggerBuildAction.deletePipelineAction))
+                    pipelineTriggerProperty.buildDeleteActionJobs(workflowJob.getName());
+            }
+            else{
+                LOGGER.log(Level.WARNING,"[MultiBranch Action Triggers Plugin] {0} not included by the Include Filter", workflowJob.getName());
+            }
+        }
     }
 
     public static void triggerDeleteActionJobs(WorkflowJob workflowJob) {
@@ -323,4 +337,50 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         createPipelineAction, deletePipelineAction
     }
 
+    public String getBranchIncludeFilter() {
+        return branchIncludeFilter;
+    }
+
+    @DataBoundSetter
+    public void setBranchIncludeFilter(String branchIncludeFilter) {
+        this.branchIncludeFilter = branchIncludeFilter;
+    }
+
+    public String getBranchExcludeFilter() {
+        return branchExcludeFilter;
+    }
+
+    @DataBoundSetter
+    public void setBranchExcludeFilter(String branchExcludeFilter) {
+        this.branchExcludeFilter = branchExcludeFilter;
+    }
+
+    private static boolean checkIncludeFilter(String projectName, PipelineTriggerProperty pipelineTriggerProperty) {
+        String wildcardDefinitions = pipelineTriggerProperty.getBranchIncludeFilter();
+        return Pattern.matches(convertToPattern(wildcardDefinitions), projectName);
+    }
+
+    private static boolean checkExcludeFilter(String projectName, PipelineTriggerProperty pipelineTriggerProperty) {
+        String wildcardDefinitions = pipelineTriggerProperty.getBranchExcludeFilter();
+        return Pattern.matches(convertToPattern(wildcardDefinitions), projectName);
+    }
+
+    public static String convertToPattern(String wildcardDefinitions) {
+        StringBuilder quotedBranches = new StringBuilder();
+        for (String wildcard : wildcardDefinitions.split(" ")) {
+            StringBuilder quotedBranch = new StringBuilder();
+            for (String branch : wildcard.split("(?=[*])|(?<=[*])")) {
+                if (branch.equals("*")) {
+                    quotedBranch.append(".*");
+                } else if (!branch.isEmpty()) {
+                    quotedBranch.append(Pattern.quote(branch));
+                }
+            }
+            if (quotedBranches.length() > 0) {
+                quotedBranches.append("|");
+            }
+            quotedBranches.append(quotedBranch);
+        }
+        return quotedBranches.toString();
+    }
 }
