@@ -46,8 +46,14 @@ How It Works
     Example screenshot:
     
     ![5](./images/matp5.png)
+    
+5. (Optional) Add filtering for triggering Jobs. In default, Trigger Jobs are build for all branches which is
+    discovered by Branch Indexing. In some cases you may need to filter branches on which Trigger Jobs will be build.
+    To achieve this you can define both Include and Exclude Filters (wildcard).
+    
+    ![7](./images/matp7.png)
 
-5. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
+6. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
 in "Pipeline Create Event" field has the same number of builds with the number of Pipelines. 
     - When you go to Configuration of the Jobs, you will notice that Build Parameter is defined automatically. 
     - Branch/Pipeline name value is passed to the job by parameter named "SOURCE_PROJECT_NAME". This parameter will have the
