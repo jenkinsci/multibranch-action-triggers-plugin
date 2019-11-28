@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
  * In details by this, multi branch pipeline will trigger other job/jobs depending on the configuration.
  * Jobs defined in Pipeline Pre Create Jobs Trigger Field, will be triggered when a new pipeline created by branch indexing.
  * Jobs defined in Pipeline Post Create Jobs Trigger Field, will be triggered when a pipeline is deleted by branch indexing.
+ * Jobs defined in the Pipeline Run Delete Jobs Trigger Field will be triggered when a Pipeline run is deleted
+ * (either by explicitly deleting the run or the branch in the run.
  */
 public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchProject<?, ?>> {
 
@@ -34,8 +36,10 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     private String createActionJobsToTrigger;
     private String deleteActionJobsToTrigger;
+    private String actionJobsToTriggerOnRunDelete;
     private transient List<Job> createActionJobs;
     private transient List<Job> deleteActionJobs;
+    private transient List<Job> actionJobsOnRunDelete;
     private final int quitePeriod = 0;
     static final String projectNameParameterKey = "SOURCE_PROJECT_NAME";
     private String branchIncludeFilter;
@@ -44,12 +48,19 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     /**
      * @param createActionJobsToTrigger  Full names of the jobs in comma separated format which are defined in the field
      * @param deleteActionJobsToTrigger Full names of the jobs in comma separated format which are defined in the field
+     * @param actionJobsToTriggerOnRunDelete Full names of the jobs in comma separated format which are defined in the field
      * @see DataBoundConstructor
      */
     @DataBoundConstructor
-    public PipelineTriggerProperty(String createActionJobsToTrigger, String deleteActionJobsToTrigger, String branchIncludeFilter, String branchExcludeFilter) {
+    public PipelineTriggerProperty(
+            String createActionJobsToTrigger,
+            String deleteActionJobsToTrigger,
+            String actionJobsToTriggerOnRunDelete,
+            String branchIncludeFilter, String
+            branchExcludeFilter) {
         this.setCreateActionJobsToTrigger(createActionJobsToTrigger);
         this.setDeleteActionJobsToTrigger(deleteActionJobsToTrigger);
+        this.setActionJobsToTriggerOnRunDelete(actionJobsToTriggerOnRunDelete);
         this.setBranchIncludeFilter(branchIncludeFilter);
         this.setBranchExcludeFilter(branchExcludeFilter);
     }
@@ -97,6 +108,28 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     }
 
     /**
+     * Getter method for @actionJobsToTriggerOnRunDelete
+     *
+     * @return Full names of the jobs in comma-separated format
+     */
+    public String getActionJobsToTriggerOnRunDelete() {
+        return actionJobsToTriggerOnRunDelete;
+    }
+
+    /**
+     * Setter method for @actionJobsToTriggerOnRunDelete
+     * Additionally. this methods parses job names from @actionJobsToTriggerOnRunDelete,
+     * convert to List of Job and store in @actionJobsOnRunDelete for later use.
+     *
+     * @param actionJobsToTriggerOnRunDelete Full names of the jobs in comma-separated format which are defined in the field
+     */
+    @DataBoundSetter
+    public void setActionJobsToTriggerOnRunDelete(String actionJobsToTriggerOnRunDelete) {
+        this.setActionJobsOnRunDelete(this.validateJobs(actionJobsToTriggerOnRunDelete));
+        this.actionJobsToTriggerOnRunDelete = this.convertJobsToCommaSeparatedString(this.getActionJobsOnRunDelete());
+    }
+
+    /**
      * Getter method for @createActionJobs
      *
      * @return List of Job for Pre Action
@@ -132,6 +165,23 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         this.deleteActionJobs = deleteActionJobs;
     }
 
+    /**
+     * Getter method for @actionJobsOnRunDelete
+     *
+     * @return List of Job for Run Delete Action
+     */
+    public List<Job> getActionJobsOnRunDelete() {
+        return actionJobsOnRunDelete;
+    }
+
+    /**
+     * Setter method for @actionJobsOnRunDelete
+     *
+     * @param actionJobsOnRunDelete List of Job for Run Delete Action
+     */
+    public void setActionJobsOnRunDelete(List<Job> actionJobsOnRunDelete) {
+        this.actionJobsOnRunDelete = actionJobsOnRunDelete;
+    }
     /**
      * @see AbstractFolderPropertyDescriptor
      */
@@ -279,6 +329,16 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         this.buildJobs(projectName, this.validateJobs(this.getDeleteActionJobsToTrigger()));
     }
 
+    /**
+     * Build Jobs which are defined in the @actionJobsToTriggerOnRunDelete field.
+     *
+     * @param projectName Name of the project. This will be branch name which is found in branch indexing.
+     *                    Also this value will be passed as StringParameterDefinition
+     */
+    public void buildActionJobsOnRunDelete(String projectName) {
+        this.buildJobs(projectName, this.validateJobs(this.getActionJobsToTriggerOnRunDelete()));
+    }
+
 
     /**
      * Build Jobs and pass parameter to Build
@@ -318,6 +378,8 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                     pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName());
                 else if (action.equals(PipelineTriggerBuildAction.deletePipelineAction))
                     pipelineTriggerProperty.buildDeleteActionJobs(workflowJob.getName());
+                else if (action.equals(PipelineTriggerBuildAction.deleteRunPipelineAction))
+                    pipelineTriggerProperty.buildActionJobsOnRunDelete(workflowJob.getName());
             }
             else{
                 LOGGER.log(Level.WARNING,"[MultiBranch Action Triggers Plugin] {0} not included by the Include Filter", workflowJob.getName());
@@ -333,8 +395,12 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         triggerActionJobs(workflowJob, PipelineTriggerBuildAction.createPipelineAction);
     }
 
+    public static void triggerActionJobsOnRunDelete(WorkflowJob workflowJob) {
+        triggerActionJobs(workflowJob, PipelineTriggerBuildAction.deleteRunPipelineAction);
+    }
+
     private enum PipelineTriggerBuildAction {
-        createPipelineAction, deletePipelineAction
+        createPipelineAction, deletePipelineAction, deleteRunPipelineAction
     }
 
     public String getBranchIncludeFilter() {
