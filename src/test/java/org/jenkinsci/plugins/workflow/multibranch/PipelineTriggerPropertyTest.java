@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.cloudbees.hudson.plugins.folder.Folder;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
@@ -18,7 +17,6 @@ import org.junit.runners.Parameterized;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockFolder;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -113,7 +111,7 @@ public class PipelineTriggerPropertyTest {
         this.jenkins.waitUntilNoActivity();
 
         //Test Pre Trigger Jobs
-        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter, 1);
+        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, null, null);
 
         // Run jobs to create Runs
         List<WorkflowJob> workflowJobs = workflowMultiBranchProject.getAllItems(WorkflowJob.class);
@@ -127,7 +125,6 @@ public class PipelineTriggerPropertyTest {
             this.jenkins.waitUntilNoActivity();
             assertEquals(3, workflowJob.getBuilds().size());
         }
-        this.jenkins.waitUntilNoActivity();
 
         // Delete Run
         for (WorkflowJob workflowJob : workflowJobs)
@@ -137,7 +134,7 @@ public class PipelineTriggerPropertyTest {
             System.out.println(workflowJob.getBuilds());
             assertEquals(workflowJob.getBuilds().size(), 2);
         }
-        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1);
+        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, Collections.singletonList(3), Collections.singletonList("trallalla"));
 
         //Change Branch Source and set Include field to None to test Pipeline Delete by Branch Indexing
         workflowMultiBranchProject.getSourcesList().clear();
@@ -146,9 +143,15 @@ public class PipelineTriggerPropertyTest {
         this.jenkins.waitUntilNoActivity();
 
         //Test Post Trigger Jobs
-        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter, 1);
+        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, null, null);
         //Test whether a branch delete also triggers the deleteRun Jobs
-        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 3);
+        Set<Integer> expectedRunNumbers = new HashSet<>();
+        expectedRunNumbers.add(1);
+        expectedRunNumbers.add(2);
+        Set<String> expectedRunDisplayNames = new HashSet<>();
+        expectedRunDisplayNames.add("#1");
+        expectedRunDisplayNames.add("#2");
+        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 3, expectedRunNumbers, expectedRunDisplayNames);
     }
 
     private void indexMultiBranchPipeline(WorkflowMultiBranchProject workflowMultiBranchProject, int expectedPipelineCount) throws Exception {
@@ -170,7 +173,9 @@ public class PipelineTriggerPropertyTest {
                 Job triggeredJob,
                 String branchIncludeFilter,
                 String branchExcludeFilter,
-                int jobCountFactor)
+                int jobCountFactor,
+                Collection<Integer> expectedRunNumbers,
+                Collection<String> expectedRunNames)
             throws Exception {
         RunList<FreeStyleBuild> builds = triggeredJob.getBuilds();
         ArrayList filteredBranches = this.getFilteredBranchNames(branchIncludeFilter, branchExcludeFilter);
@@ -187,6 +192,26 @@ public class PipelineTriggerPropertyTest {
                 }
             } else {
                 throw new Exception(PipelineTriggerProperty.projectNameParameterKey + " key not found in Build Variables");
+            }
+            if (expectedRunNumbers != null) {
+                if (buildVariables.containsKey(PipelineTriggerProperty.runNumberParameterKey)) {
+                    String runNumber = buildVariables.get(PipelineTriggerProperty.runNumberParameterKey);
+                    if ( !(expectedRunNumbers.contains(Integer.parseInt(runNumber)))) {
+                        throw new Exception("Run number " + runNumber + " not found in the triggered Job");
+                    }
+                } else {
+                    throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");
+                }
+            }
+            if (expectedRunNames != null) {
+                if (buildVariables.containsKey(PipelineTriggerProperty.runDisplayNameParameterKey)) {
+                    String runDisplayName = buildVariables.get(PipelineTriggerProperty.runDisplayNameParameterKey);
+                    if ( !(expectedRunNumbers.contains(runDisplayName))) {
+                        throw new Exception("Run display name " + runDisplayName + " not found in the triggered Job");
+                    }
+                } else {
+                    throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");
+                }
             }
         }
     }

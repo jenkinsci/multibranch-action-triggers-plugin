@@ -28,7 +28,7 @@ public class ExtendedWorkflowMultiBranchProject extends WorkflowMultiBranchProje
             if (item instanceof WorkflowJob && item.getParent() instanceof WorkflowMultiBranchProject) {
                 PipelineTriggerProperty.triggerDeleteActionJobs((WorkflowJob) item);
                 for (Run run : ((WorkflowJob) item).getBuilds()) {
-                    PipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) item);
+                    PipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) item, run);
                 }
             }
 
@@ -43,7 +43,7 @@ public class ExtendedWorkflowMultiBranchProject extends WorkflowMultiBranchProje
             super.onDeleted(run);
             System.out.println(run.getParent().getClass());
             if (run.getParent() instanceof WorkflowJob) {
-                PipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) run.getParent());
+                PipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) run.getParent(), run);
             }
         }
     }
