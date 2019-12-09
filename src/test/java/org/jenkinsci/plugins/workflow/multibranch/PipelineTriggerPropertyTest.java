@@ -134,7 +134,7 @@ public class PipelineTriggerPropertyTest {
             System.out.println(workflowJob.getBuilds());
             assertEquals(workflowJob.getBuilds().size(), 2);
         }
-        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, Collections.singletonList(3), Collections.singletonList("trallalla"));
+        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, Collections.singletonList(3), Collections.singletonList("#3"));
 
         //Change Branch Source and set Include field to None to test Pipeline Delete by Branch Indexing
         workflowMultiBranchProject.getSourcesList().clear();
@@ -148,9 +148,11 @@ public class PipelineTriggerPropertyTest {
         Set<Integer> expectedRunNumbers = new HashSet<>();
         expectedRunNumbers.add(1);
         expectedRunNumbers.add(2);
+        expectedRunNumbers.add(3); // from previous delete run
         Set<String> expectedRunDisplayNames = new HashSet<>();
         expectedRunDisplayNames.add("#1");
         expectedRunDisplayNames.add("#2");
+        expectedRunDisplayNames.add("#3"); // from previous delete run
         this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 3, expectedRunNumbers, expectedRunDisplayNames);
     }
 
@@ -197,7 +199,7 @@ public class PipelineTriggerPropertyTest {
                 if (buildVariables.containsKey(PipelineTriggerProperty.runNumberParameterKey)) {
                     String runNumber = buildVariables.get(PipelineTriggerProperty.runNumberParameterKey);
                     if ( !(expectedRunNumbers.contains(Integer.parseInt(runNumber)))) {
-                        throw new Exception("Run number " + runNumber + " not found in the triggered Job");
+                        throw new Exception("Run number " + runNumber + " not found in the expected triggered Jobs " + expectedRunNumbers);
                     }
                 } else {
                     throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");
@@ -206,8 +208,8 @@ public class PipelineTriggerPropertyTest {
             if (expectedRunNames != null) {
                 if (buildVariables.containsKey(PipelineTriggerProperty.runDisplayNameParameterKey)) {
                     String runDisplayName = buildVariables.get(PipelineTriggerProperty.runDisplayNameParameterKey);
-                    if ( !(expectedRunNumbers.contains(runDisplayName))) {
-                        throw new Exception("Run display name " + runDisplayName + " not found in the triggered Job");
+                    if ( !(expectedRunNames.contains(runDisplayName))) {
+                        throw new Exception("Run display name " + runDisplayName + " not found in the expected triggered Jobs " + expectedRunNames);
                     }
                 } else {
                     throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");

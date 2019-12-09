@@ -268,36 +268,38 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             String tokenJobName = tokenizer.nextToken();
             for (Job job : jobs) {
                 if (job.getFullName().trim().equals(tokenJobName.trim())) {
+                    List<ParameterDefinition> parameters = new ArrayList<>();
                     //Try to add job properties. If fails do not stop just log warning.
-                    try {
-                        if (!checkJobHasSetProjectNameParameter(job)) {
-                            job.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition(PipelineTriggerProperty.projectNameParameterKey, "", "Added by Multibranch Pipeline Plugin")));
-                            job.save();
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definition for "
-                            + PipelineTriggerProperty.projectNameParameterKey
-                            + ". This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
+                    if (!checkJobHasSetProjectNameParameter(job))
+                    {
+                        parameters.add(new StringParameterDefinition(
+                            PipelineTriggerProperty.projectNameParameterKey,
+                            "",
+                            "Added by Multibranch Pipeline Plugin"));
                     }
-                    try {
-                        if (addRunParameters && !checkJobHasSetRunNumberParameter(job)) {
-                            job.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition(PipelineTriggerProperty.runNumberParameterKey, "", "Added by Multibranch Pipeline Plugin")));
-                            job.save();
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definition for "
-                            + PipelineTriggerProperty.runNumberParameterKey
-                            + ". This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
+                    if (addRunParameters && !checkJobHasSetRunNumberParameter(job)) {
+                        parameters.add(new StringParameterDefinition(
+                            PipelineTriggerProperty.runNumberParameterKey,
+                            "",
+                            "Added by Multibranch Pipeline Plugin"));
                     }
-                    try {
-                        if (addRunParameters && !checkJobHasSetRunDisplayNameParameter(job)) {
-                            job.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition(PipelineTriggerProperty.runDisplayNameParameterKey, "", "Added by Multibranch Pipeline Plugin")));
+                    if (addRunParameters && !checkJobHasSetRunDisplayNameParameter(job)) {
+                        parameters.add(new StringParameterDefinition(
+                            PipelineTriggerProperty.runDisplayNameParameterKey,
+                            "",
+                            "Added by Multibranch Pipeline Plugin"));
+                    }
+                    if (!parameters.isEmpty())
+                    {
+                        try {
+                            ParameterDefinition[] propertiesToAdd = parameters.toArray(new ParameterDefinition[]{});
+                            job.addProperty(new ParametersDefinitionProperty(propertiesToAdd));
                             job.save();
+                        } catch (Exception ex) {
+                            LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definitions." +
+                                " This may affect jobs which are triggered from Multibranch Pipeline Plugin.",
+                                ex);
                         }
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definition for "
-                            + PipelineTriggerProperty.runDisplayNameParameterKey
-                            + ". This may affect jobs which are triggered from Multibranch Pipeline Plugin.", ex);
                     }
                     validatedJobs.add(job);
                 }
