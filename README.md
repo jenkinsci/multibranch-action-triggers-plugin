@@ -59,11 +59,16 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     - Branch/Pipeline name value is passed to the job by parameter named "SOURCE_PROJECT_NAME". This parameter will have the
     name of the Pipeline/Branch which is created by Multi Branch Pipeline. For example if you only have master branch
     in your repository, this value will be "master".
+    - Full name of the Branch/Pipeline is passed to the job by parameter named "SOURCE_PROJECT_FULL_NAME". This parameter will have the
+     full name of the Pipeline/Branch which is created by Multi Branch Pipeline. For example if you only have master branch
+    in your repository, this value will be "MyMultiBranchPipeline/master".
     - You can use this variable for your needs in your scripts/pipelines.
     
     Example screenshot:
     
     ![6](./images/matp6.png)
+    
+    ![8](./images/matp8.png)
     
 Reporting Issues
 ======
