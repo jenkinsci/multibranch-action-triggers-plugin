@@ -97,7 +97,7 @@ public class PipelineTriggerPropertyTest {
         this.jenkins.waitUntilNoActivity();
 
         //Test Pre Trigger Jobs
-        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter);
+        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter, workflowMultiBranchProject);
 
         //Change Branch Source and set Include field to None to test Pipeline Delete by Branch Indexing
         workflowMultiBranchProject.getSourcesList().clear();
@@ -106,7 +106,7 @@ public class PipelineTriggerPropertyTest {
         this.jenkins.waitUntilNoActivity();
 
         //Test Post Trigger Jobs
-        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter);
+        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter, workflowMultiBranchProject);
     }
 
     private void indexMultiBranchPipeline(WorkflowMultiBranchProject workflowMultiBranchProject, int expectedPipelineCount) throws Exception {
@@ -124,7 +124,7 @@ public class PipelineTriggerPropertyTest {
             this.gitRepo.git("checkout", "-b", this.branchNames.get(i));
     }
 
-    private void checkTriggeredJobs(Job triggeredJob, String branchIncludeFilter, String branchExcludeFilter) throws Exception {
+    private void checkTriggeredJobs(Job triggeredJob, String branchIncludeFilter, String branchExcludeFilter, WorkflowMultiBranchProject callerJob) throws Exception {
         RunList<FreeStyleBuild> builds = triggeredJob.getBuilds();
         ArrayList filteredBranches = this.getFilteredBranchNames(branchIncludeFilter, branchExcludeFilter);
 
@@ -133,10 +133,14 @@ public class PipelineTriggerPropertyTest {
         while (iterator.hasNext()) {
             FreeStyleBuild build = iterator.next();
             Map<String, String> buildVariables = build.getBuildVariables();
-            if (buildVariables.containsKey(PipelineTriggerProperty.projectNameParameterKey)) {
-                String value = buildVariables.get(PipelineTriggerProperty.projectNameParameterKey);
-                if ( !(filteredBranches.contains(value))) {
-                    throw new Exception("Trigger Pipeline name not found in the Job Logs");
+            if (buildVariables.containsKey(PipelineTriggerProperty.projectNameParameterKey) && buildVariables.containsKey(PipelineTriggerProperty.projectFullNameParameterKey)) {
+                String projectName = buildVariables.get(PipelineTriggerProperty.projectNameParameterKey);
+                String projectFullName = buildVariables.get(PipelineTriggerProperty.projectFullNameParameterKey);
+                if ( !(filteredBranches.contains(projectName))) {
+                    throw new Exception("Trigger Pipeline name not found in the Job Parameters");
+                }
+                if( !projectFullName.equals(callerJob.getFullName() + "/" + projectName) ) {
+                    throw new Exception("Trigger Pipeline Full Name not found in the Job Parameter");
                 }
             } else {
                 throw new Exception(PipelineTriggerProperty.projectNameParameterKey + " key not found in Build Variables");
