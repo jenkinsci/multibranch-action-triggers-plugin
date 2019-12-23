@@ -7,7 +7,8 @@ or when a Run (also known as Build) is deleted by a Multi Branch Pipeline Job.
 Summary
 =======
 Multi Branch Pipeline Jobs are capable of creating/deleting Pipelines depending on the branches in the repository.
-They also remove old runs, depending on the orphaned item strategy configured for the pipeline.
+They also remove old runs, depending on the orphaned item strategy configured for the pipeline,
+or when a branch is deleted.
 
 For some reasons, tasks/jobs/scripts may be needed to run depending on Pipeline creation/deletion. For example,
 you may need to build up a new environment when a new branch is created and this environment must be ready before
