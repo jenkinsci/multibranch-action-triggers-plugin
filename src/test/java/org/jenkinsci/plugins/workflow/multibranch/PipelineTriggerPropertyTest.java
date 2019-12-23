@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.cloudbees.hudson.plugins.folder.Folder;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
@@ -8,6 +7,8 @@ import hudson.util.RunList;
 import jenkins.branch.BranchSource;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
+
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,7 +17,6 @@ import org.junit.runners.Parameterized;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockFolder;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,6 +35,7 @@ public class PipelineTriggerPropertyTest {
     private String pipelineFile = "Jenkinsfile";
     private String createTriggerJobName = "CreateTriggerJob";
     private String deleteTriggerJobName = "DeleteTriggerJob";
+    private String deleteRunTriggerJobName = "DeleteRunTriggerJob";
     private String triggerFolderName = "TriggerFolder";
     private List<String> branchNames = Arrays.asList("master","feature", "bugfix");
     private int expectedPipelineCount = this.branchNames.size();
@@ -71,9 +72,10 @@ public class PipelineTriggerPropertyTest {
         //Create Free Style Jobs for Testing Trigger
         FreeStyleProject createTriggerJob = jenkins.createFreeStyleProject(this.createTriggerJobName);
         FreeStyleProject deleteTriggerJob = jenkins.createFreeStyleProject(this.deleteTriggerJobName);
+        FreeStyleProject deleteRunTriggerJob = jenkins.createFreeStyleProject(this.deleteRunTriggerJobName);
 
         //Create WorkflowMultiBranch Job and Test
-        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter);
+        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter);
     }
 
     @Test
@@ -82,22 +84,57 @@ public class PipelineTriggerPropertyTest {
         MockFolder triggerFolder = jenkins.createFolder(this.triggerFolderName);
         FreeStyleProject createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.createTriggerJobName);
         FreeStyleProject deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteTriggerJobName);
+        FreeStyleProject deleteRunTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteRunTriggerJobName);
 
         //Create WorkflowMultiBranch Job and Test
-        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter);
+        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter);
     }
 
-    private void createWorkflowMultiBranchJobWithTriggers(Job createTriggerJob, Job deleteTriggerJob, String branchIncludeFilter, String branchExcludeFilter) throws Exception {
+    private void createWorkflowMultiBranchJobWithTriggers(
+                Job createTriggerJob,
+                Job deleteTriggerJob,
+                Job deleteRunTriggerJob,
+                String branchIncludeFilter,
+                String branchExcludeFilter)
+            throws Exception {
 
         //Create Multi Branch Pipeline Job with Git Repo
         WorkflowMultiBranchProject workflowMultiBranchProject = this.jenkins.createProject(WorkflowMultiBranchProject.class, UUID.randomUUID().toString());
         workflowMultiBranchProject.getSourcesList().add(new BranchSource(new GitSCMSource(null, this.gitRepo.toString(), "", "*", "", false)));
-        workflowMultiBranchProject.getProperties().add(new PipelineTriggerProperty(createTriggerJob.getFullName(), deleteTriggerJob.getFullName(), branchIncludeFilter, branchExcludeFilter));
+        workflowMultiBranchProject.getProperties().add(new PipelineTriggerProperty(
+            createTriggerJob.getFullName(),
+            deleteTriggerJob.getFullName(),
+            deleteRunTriggerJob.getFullName(),
+            branchIncludeFilter,
+            branchExcludeFilter));
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
 
         //Test Pre Trigger Jobs
-        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter, workflowMultiBranchProject);
+        this.checkTriggeredJobs(createTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, null, null, workflowMultiBranchProject);
+
+        // Run jobs to create Runs
+        List<WorkflowJob> workflowJobs = workflowMultiBranchProject.getAllItems(WorkflowJob.class);
+        for (WorkflowJob workflowJob : workflowJobs)
+        {
+            assertEquals(1, workflowJob.getBuilds().size());
+            workflowJob.scheduleBuild2(0);
+            this.jenkins.waitUntilNoActivity();
+            assertEquals(2, workflowJob.getBuilds().size());
+            workflowJob.scheduleBuild2(0);
+            this.jenkins.waitUntilNoActivity();
+            assertEquals(3, workflowJob.getBuilds().size());
+        }
+
+        // Delete Run
+        for (WorkflowJob workflowJob : workflowJobs)
+        {
+            workflowJob.getBuilds().getLastBuild().delete();
+            this.jenkins.waitUntilNoActivity();
+            System.out.println(workflowJob.getBuilds());
+            assertEquals(workflowJob.getBuilds().size(), 2);
+        }
+        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, Collections.singletonList(3), Collections.singletonList("#3"), workflowMultiBranchProject);
 
         //Change Branch Source and set Include field to None to test Pipeline Delete by Branch Indexing
         workflowMultiBranchProject.getSourcesList().clear();
@@ -106,7 +143,17 @@ public class PipelineTriggerPropertyTest {
         this.jenkins.waitUntilNoActivity();
 
         //Test Post Trigger Jobs
-        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter, workflowMultiBranchProject);
+        this.checkTriggeredJobs(deleteTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, null, null, workflowMultiBranchProject);
+        //Test whether a branch delete also triggers the deleteRun Jobs
+        Set<Integer> expectedRunNumbers = new HashSet<>();
+        expectedRunNumbers.add(1);
+        expectedRunNumbers.add(2);
+        expectedRunNumbers.add(3); // from previous delete run
+        Set<String> expectedRunDisplayNames = new HashSet<>();
+        expectedRunDisplayNames.add("#1");
+        expectedRunDisplayNames.add("#2");
+        expectedRunDisplayNames.add("#3"); // from previous delete run
+        this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 3, expectedRunNumbers, expectedRunDisplayNames, workflowMultiBranchProject);
     }
 
     private void indexMultiBranchPipeline(WorkflowMultiBranchProject workflowMultiBranchProject, int expectedPipelineCount) throws Exception {
@@ -124,11 +171,19 @@ public class PipelineTriggerPropertyTest {
             this.gitRepo.git("checkout", "-b", this.branchNames.get(i));
     }
 
-    private void checkTriggeredJobs(Job triggeredJob, String branchIncludeFilter, String branchExcludeFilter, WorkflowMultiBranchProject callerJob) throws Exception {
+    private void checkTriggeredJobs(
+                Job triggeredJob,
+                String branchIncludeFilter,
+                String branchExcludeFilter,
+                int jobCountFactor,
+                Collection<Integer> expectedRunNumbers,
+                Collection<String> expectedRunNames,
+                WorkflowMultiBranchProject callerJob)
+            throws Exception {
         RunList<FreeStyleBuild> builds = triggeredJob.getBuilds();
         ArrayList filteredBranches = this.getFilteredBranchNames(branchIncludeFilter, branchExcludeFilter);
 
-        assertEquals(filteredBranches.size(), builds.size());
+        assertEquals(filteredBranches.size() * jobCountFactor, builds.size());
         Iterator<FreeStyleBuild> iterator = builds.iterator();
         while (iterator.hasNext()) {
             FreeStyleBuild build = iterator.next();
@@ -144,6 +199,26 @@ public class PipelineTriggerPropertyTest {
                 }
             } else {
                 throw new Exception(PipelineTriggerProperty.projectNameParameterKey + " key not found in Build Variables");
+            }
+            if (expectedRunNumbers != null) {
+                if (buildVariables.containsKey(PipelineTriggerProperty.runNumberParameterKey)) {
+                    String runNumber = buildVariables.get(PipelineTriggerProperty.runNumberParameterKey);
+                    if ( !(expectedRunNumbers.contains(Integer.parseInt(runNumber)))) {
+                        throw new Exception("Run number " + runNumber + " not found in the expected triggered Jobs " + expectedRunNumbers);
+                    }
+                } else {
+                    throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");
+                }
+            }
+            if (expectedRunNames != null) {
+                if (buildVariables.containsKey(PipelineTriggerProperty.runDisplayNameParameterKey)) {
+                    String runDisplayName = buildVariables.get(PipelineTriggerProperty.runDisplayNameParameterKey);
+                    if ( !(expectedRunNames.contains(runDisplayName))) {
+                        throw new Exception("Run display name " + runDisplayName + " not found in the expected triggered Jobs " + expectedRunNames);
+                    }
+                } else {
+                    throw new Exception(PipelineTriggerProperty.runNumberParameterKey + " key not found in Build Variables");
+                }
             }
         }
     }

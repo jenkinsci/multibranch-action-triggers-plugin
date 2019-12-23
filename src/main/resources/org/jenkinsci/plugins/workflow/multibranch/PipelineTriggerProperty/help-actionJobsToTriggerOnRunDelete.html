@@ -1,0 +1,11 @@
+<div>
+    Jobs which are defined in this field will be build automatically when a Run is deleted inside a MultiBranch Pipeline.<br>
+    The Runs which are deleted implictly when a branch is deleted also trigger this job<br/
+    AutoComplete field, Job names will be listed automatically.<br>
+    <a href="https://wiki.jenkins.io/display/JENKINS/Parameterized+Build">String Parameters (Parameterized Build)</a> will be added with the following names to Jobs which are defined in the field:
+    <ul>
+        <li>SOURCE_PROJECT_NAME: the name of the branch which triggered this run</li>
+        <li>SOURCE_RUN_NUMBER: the build number of the deleted run which triggered this run</li>
+        <li>SOURCE_RUN_DISPLAY_NAME: the displayname of the deleted run which triggered this run</li>
+    </ul>
+</div>
