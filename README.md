@@ -1,17 +1,25 @@
 MultiBranch Action Triggers Plugin
 ==================================
 
-This plugin enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch Pipeline Job.
+This plugin enables building/triggering other jobs when a Pipeline job is created or deleted,
+or when a Run (also known as Build) is deleted by a Multi Branch Pipeline Job.
 
 Summary
 =======
 Multi Branch Pipeline Jobs are capable of creating/deleting Pipelines depending on the branches in the repository.
+They also remove old runs, depending on the orphaned item strategy configured for the pipeline,
+or when a branch is deleted.
 
 For some reasons, tasks/jobs/scripts may be needed to run depending on Pipeline creation/deletion. For example,
 you may need to build up a new environment when a new branch is created and this environment must be ready before
 the pipeline starts. Also same behavior may be necessary for destroying environments with the deletion of the branch/Pipeline.
 
-This plugin enables triggering/building Jobs when a new Pipeline is created or deleted with in the Multi Branch Pipeline job.
+Also, there might be reasons to start a job when a run is deleted. For example, if a run
+has published an artifact (e.g. a docker image) in an external storage (e.g. a docker registry),
+it might be desirable to remove the artifact from the external storage whenever the run is deleted.
+
+This plugin enables triggering/building Jobs when a new Pipeline is created or deleted with in the Multi Branch Pipeline job,
+or when a run is deleted.
 
 
 How It Works
@@ -22,11 +30,11 @@ How It Works
 
    Example screenshot:
    
-   ![1](./images/matp1.png)
+   ![1q](images/matp1a.png)
    
-   Example screenshot:
+   ![1b](images/matp1b.png)
    
-   ![2](./images/matp2.png)
+   ![1c](images/matp1c.png)
 
 3. Create your Multi Branch Pipeline 
 
@@ -64,11 +72,25 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     in your repository, this value will be "MyMultiBranchPipeline/master".
     - You can use this variable for your needs in your scripts/pipelines.
     
-    Example screenshot:
+    Example screenshots:
     
-    ![6](./images/matp6.png)
+    ![8a](images/matp8a.png)
     
-    ![8](./images/matp8.png)
+    ![8b](images/matp8b.png)
+    
+7. Whenever the Multi Branch Pipeline deletes a run (either by deleting the run, 
+   or by deleting the complete branch), or whenever a run is deleted manually, 
+   the Jobs that you defined in "Run Delete Event" will be executed. 
+   Additionally to the parameters which are passed on branch creation or deletion,
+   two other parameters ("SOURCE_RUN_NUMBER" and "SOURCE_RUN_DISPLAY_NAME") are passed 
+   to the triggered job(s).
+   
+   Example Screenshots:
+   
+    ![8c](./images/matp8c.png)
+    
+    ![8d](./images/matp8d.png)
+   
     
 Reporting Issues
 ======
