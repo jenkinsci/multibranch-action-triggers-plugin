@@ -107,8 +107,12 @@ Reporting Issues
 1. Login [Jenkins Jira](https://issues.jenkins-ci.org/secure/Dashboard.jspa) 
 2. Create issue with component name "multibranch-action-triggers-plugin"
 
-Humble Request
+Nice time to have a coffee
 =================
-I will be glad if you could star this project. 
-
+If you feel your self generous today, you can buy me a coffee : ) 
+Or you can start the project.
 Thanks.
+<br>
+<a href="https://www.buymeacoffee.com/STiAsoy" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" alt="Buy Me A Coffee" style="width: 100px !important;">
+</a>
