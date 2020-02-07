@@ -107,7 +107,7 @@ Reporting Issues
 1. Login [Jenkins Jira](https://issues.jenkins-ci.org/secure/Dashboard.jspa) 
 2. Create issue with component name "multibranch-action-triggers-plugin"
 
-     
+Thanks
 =================
 If you feel your self generous today, you can buy me a coffee : )
 <br>
