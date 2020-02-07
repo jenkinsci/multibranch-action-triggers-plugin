@@ -30,7 +30,7 @@ How It Works
 
    Example screenshot:
    
-   ![1q](images/matp1a.png)
+   ![1a](images/matp1a.png)
    
    ![1b](images/matp1b.png)
    
@@ -40,7 +40,7 @@ How It Works
 
     Example screenshot:
     
-    ![3](./images/matp3.png)
+    ![3a](images/matp3a.png)
 
 4. Define "Pipeline Action Triggers" Jobs at the bottom of the configuration page of the Multi Branch Pipeline.
     - This fields has Auto-Complete feature.
@@ -49,17 +49,17 @@ How It Works
     
     Example screenshot:
     
-    ![4](./images/matp4.png)
+    ![4a](images/matp4a.png)
     
     Example screenshot:
     
-    ![5](./images/matp5.png)
+    ![4b](images/matp4b.png)
     
 5. (Optional) Add filtering for triggering Jobs. In default, Trigger Jobs are build for all branches which is
     discovered by Branch Indexing. In some cases you may need to filter branches on which Trigger Jobs will be build.
     To achieve this you can define both Include and Exclude Filters (wildcard).
     
-    ![7](./images/matp7.png)
+    ![5a](images/matp5a.png)
 
 6. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
 in "Pipeline Create Event" field has the same number of builds with the number of Pipelines. 
@@ -74,9 +74,9 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     
     Example screenshots:
     
-    ![8a](images/matp8a.png)
+    ![6a](images/matp6a.png)
     
-    ![8b](images/matp8b.png)
+    ![6b](images/matp6b.png)
     
 7. Whenever the Multi Branch Pipeline deletes a run (either by deleting the run, 
    or by deleting the complete branch), or whenever a run is deleted manually, 
@@ -87,9 +87,19 @@ in "Pipeline Create Event" field has the same number of builds with the number o
    
    Example Screenshots:
    
-    ![8c](./images/matp8c.png)
+    ![7a](images/matp7a.png)
     
-    ![8d](./images/matp8d.png)
+    ![7b](images/matp7b.png)
+    
+8. (Optional) Add additional parameters for passing to Triggering Jobs. Parameters which are defined in this section
+   will be automatically defined in Trigger Jobs and values will be passed during the build.
+   
+   Example Screenshots:
+   
+   ![8a](images/matp8a.png)
+   
+   ![8b](images/matp8b.png)
+   
    
     
 Reporting Issues
