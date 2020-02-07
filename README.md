@@ -109,10 +109,11 @@ Reporting Issues
 
 Nice time to have a coffee
 =================
-If you feel your self generous today, you can buy me a coffee : ) 
+If you feel your self generous today, you can buy me a coffee : )
+<br>
 Or you can start the project.
 Thanks.
 <br>
 <a href="https://www.buymeacoffee.com/STiAsoy" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" alt="Buy Me A Coffee" style="width: 100px !important;">
+  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" alt="Buy Me A Coffee" style="width: 50px !important;">
 </a>
