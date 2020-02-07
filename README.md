@@ -116,5 +116,5 @@ Thanks.
 <br>
 <br>
 <a href="https://www.buymeacoffee.com/STiAsoy" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" alt="Buy Me A Coffee" style="height: 20px !important; width: 50px !important">
+  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" width="50px" alt="Buy Me A Coffee" style="height: 20px !important; width: 50px !important">
 </a>
