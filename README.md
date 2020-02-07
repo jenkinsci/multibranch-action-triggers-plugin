@@ -115,6 +115,8 @@ Or you can start the project.
 Thanks.
 <br>
 <br>
-<a href="https://www.buymeacoffee.com/STiAsoy" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" width="50px" alt="Buy Me A Coffee" style="height: 20px !important; width: 50px !important">
-</a>
+<div align="center">
+    <a href="https://www.buymeacoffee.com/STiAsoy" target="_blank">
+        <img src="https://cdn.buymeacoffee.com/buttons/default-black.png" width="150px" alt="Buy Me A Coffee" style="width: 150px !important">
+    </a>
+</div>
