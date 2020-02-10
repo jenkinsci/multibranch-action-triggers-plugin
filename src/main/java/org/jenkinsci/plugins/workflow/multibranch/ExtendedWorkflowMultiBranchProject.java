@@ -21,29 +21,13 @@ public class ExtendedWorkflowMultiBranchProject extends WorkflowMultiBranchProje
         @Override
         public void onCreated(Item item) {
             super.onCreated(item);
-            if (item instanceof WorkflowJob && item.getParent() instanceof WorkflowMultiBranchProject){
-                WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) item.getParent();
-                DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties = workflowMultiBranchProject.getProperties();
-                PipelineTriggerProperty pipelineTriggerProperty = properties.get(PipelineTriggerProperty.class);
-                if(pipelineTriggerProperty != null)
-                    pipelineTriggerProperty.triggerCreateActionJobs((WorkflowJob) item);
-            }
+            PipelineTriggerProperty.triggerPipelineTriggerPropertyFromParentForOnCreate(item);
         }
 
         @Override
         public void onDeleted(Item item) {
             super.onDeleted(item);
-            if (item instanceof WorkflowJob && item.getParent() instanceof WorkflowMultiBranchProject) {
-                WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) item.getParent();
-                DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties = workflowMultiBranchProject.getProperties();
-                PipelineTriggerProperty pipelineTriggerProperty = properties.get(PipelineTriggerProperty.class);
-                if(pipelineTriggerProperty != null) {
-                    pipelineTriggerProperty.triggerDeleteActionJobs((WorkflowJob) item);
-                    for (Run run : ((WorkflowJob) item).getBuilds()) {
-                        pipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) item, run);
-                    }
-                }
-            }
+            PipelineTriggerProperty.triggerPipelineTriggerPropertyFromParentForOnDelete(item);
         }
 
     }
@@ -54,13 +38,7 @@ public class ExtendedWorkflowMultiBranchProject extends WorkflowMultiBranchProje
         @Override
         public void onDeleted(Run run) {
             super.onDeleted(run);
-            if (run.getParent() instanceof WorkflowJob && run.getParent().getParent() instanceof WorkflowMultiBranchProject) {
-                WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) run.getParent().getParent();
-                DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties = workflowMultiBranchProject.getProperties();
-                PipelineTriggerProperty pipelineTriggerProperty = properties.get(PipelineTriggerProperty.class);
-                if(pipelineTriggerProperty != null)
-                    pipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) run.getParent(), run);
-            }
+            PipelineTriggerProperty.triggerPipelineTriggerPropertyFromParentForOnRunDelete(run);
         }
     }
 }

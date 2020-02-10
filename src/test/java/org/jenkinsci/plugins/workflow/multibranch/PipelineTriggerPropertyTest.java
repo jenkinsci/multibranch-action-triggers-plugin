@@ -1,8 +1,9 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Job;
+import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
+import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
+import hudson.model.*;
+import hudson.util.DescribableList;
 import hudson.util.RunList;
 import jenkins.branch.BranchSource;
 import jenkins.plugins.git.GitSCMSource;
