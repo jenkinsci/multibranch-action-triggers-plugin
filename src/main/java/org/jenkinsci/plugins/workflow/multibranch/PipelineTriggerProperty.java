@@ -524,6 +524,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     public static String convertToPattern(String wildcardDefinitions) {
         StringBuilder quotedBranches = new StringBuilder();
+        if(wildcardDefinitions == null){
+            wildcardDefinitions = "";
+        }
         for (String wildcard : wildcardDefinitions.split(" ")) {
             StringBuilder quotedBranch = new StringBuilder();
             for (String branch : wildcard.split("(?=[*])|(?<=[*])")) {
