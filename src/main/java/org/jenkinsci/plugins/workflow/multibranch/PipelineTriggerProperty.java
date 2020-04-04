@@ -36,20 +36,20 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     private static final Logger LOGGER = Logger.getLogger(PipelineTriggerProperty.class.getName());
 
-    private String createActionJobsToTrigger;
-    private String deleteActionJobsToTrigger;
-    private String actionJobsToTriggerOnRunDelete;
-    private transient List<Job> createActionJobs;
-    private transient List<Job> deleteActionJobs;
-    private transient List<Job> actionJobsOnRunDelete;
+    private String createActionJobsToTrigger = "";
+    private String deleteActionJobsToTrigger = "";
+    private String actionJobsToTriggerOnRunDelete = "";
+    private transient List<Job> createActionJobs = new ArrayList<>();
+    private transient List<Job> deleteActionJobs = new ArrayList<>();
+    private transient List<Job> actionJobsOnRunDelete = new ArrayList<>();
     private final int quitePeriod = 0;
     static final String projectNameParameterKey = "SOURCE_PROJECT_NAME";
     static final String projectFullNameParameterKey = "SOURCE_PROJECT_FULL_NAME";
     static final String runNumberParameterKey = "SOURCE_RUN_NUMBER";
     static final String runDisplayNameParameterKey = "SOURCE_RUN_DISPLAY_NAME";
-    private String branchIncludeFilter;
-    private String branchExcludeFilter;
-    private List<AdditionalParameter> additionalParameters;
+    private String branchIncludeFilter = "*";
+    private String branchExcludeFilter = "";
+    private List<AdditionalParameter> additionalParameters = new ArrayList<>();
 
     /**
      * @param createActionJobsToTrigger      Full names of the jobs in comma separated format which are defined in the field
@@ -524,9 +524,6 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     public static String convertToPattern(String wildcardDefinitions) {
         StringBuilder quotedBranches = new StringBuilder();
-        if(wildcardDefinitions == null){
-            wildcardDefinitions = "";
-        }
         for (String wildcard : wildcardDefinitions.split(" ")) {
             StringBuilder quotedBranch = new StringBuilder();
             for (String branch : wildcard.split("(?=[*])|(?<=[*])")) {
