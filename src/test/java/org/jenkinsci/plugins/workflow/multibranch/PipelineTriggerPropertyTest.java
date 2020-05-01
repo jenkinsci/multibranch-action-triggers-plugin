@@ -89,57 +89,78 @@ public class PipelineTriggerPropertyTest {
     @Test
     public void testPipelineTriggerPropertyWithFreeStyleJobs() throws Exception {
 
+        List additionalParameters = new ArrayList();
         //Create Free Style Jobs for Testing Trigger
-        this.initFreeStyleJobs();
+        this.initFreeStyleJobs(false);
         //Organization Folder Test
-        WorkflowMultiBranchProject workflowMultiBranchProject = this.createOrganizationFolder(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, new ArrayList<>());
-        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, new ArrayList<>(),workflowMultiBranchProject);
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.createOrganizationFolder(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
 
 
         //Create Free Style Jobs for Testing Trigger
-        this.initFreeStyleJobs();
+        this.initFreeStyleJobs(false);
         //WorkflowMultiBranch Test
-        workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, new ArrayList<>());
-        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, new ArrayList<>(),workflowMultiBranchProject);
+        workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
+
     }
 
     @Test
     public void testPipelineTriggerPropertyWithFreeStyleJobsWithAdditionalParameters() throws Exception {
 
+        List additionalParameters = this.getAdditionalParametersForTest();
         //Create Free Style Jobs for Testing Trigger
-        FreeStyleProject createTriggerJob = jenkins.createFreeStyleProject(this.createTriggerJobName);
-        FreeStyleProject deleteTriggerJob = jenkins.createFreeStyleProject(this.deleteTriggerJobName);
-        FreeStyleProject deleteRunTriggerJob = jenkins.createFreeStyleProject(this.deleteRunTriggerJobName);
+        this.initFreeStyleJobs(false);
+        //Organization Folder Test
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.createOrganizationFolder(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
 
-        //Create WorkflowMultiBranch Job and Test
-        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, this.getAdditionalParametersForTest());
+
+        //Create Free Style Jobs for Testing Trigger
+        this.initFreeStyleJobs(false);
+        //WorkflowMultiBranch Test
+        workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
+
     }
 
     @Test
     public void testPipelineTriggerPropertyWithFreeStyleJobsInFolder() throws Exception {
 
-        MockFolder triggerFolder = jenkins.createFolder(this.triggerFolderName);
-        FreeStyleProject createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.createTriggerJobName);
-        FreeStyleProject deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteTriggerJobName);
-        FreeStyleProject deleteRunTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteRunTriggerJobName);
+        List additionalParameters = new ArrayList();
+        //Create Free Style Jobs for Testing Trigger
+        this.initFreeStyleJobs(true);
+        //Organization Folder Test
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.createOrganizationFolder(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
 
-        //Create WorkflowMultiBranch Job and Test
-        this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, new ArrayList<>());
+
+        //Create Free Style Jobs for Testing Trigger
+        this.initFreeStyleJobs(true);
+        //WorkflowMultiBranch Test
+        workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
+
     }
 
     @Test
     public void testPipelineTriggerPropertyWithFreeStyleJobsInFolderWithAdditionalParameters() throws Exception {
 
-        MockFolder triggerFolder = jenkins.createFolder(this.triggerFolderName);
-        FreeStyleProject createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.createTriggerJobName);
-        FreeStyleProject deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteTriggerJobName);
-        FreeStyleProject deleteRunTriggerJob = triggerFolder.createProject(FreeStyleProject.class, this.deleteRunTriggerJobName);
+        List additionalParameters = this.getAdditionalParametersForTest();
+        //Create Free Style Jobs for Testing Trigger
+        this.initFreeStyleJobs(true);
+        //Organization Folder Test
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.createOrganizationFolder(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
 
 
+        //Create Free Style Jobs for Testing Trigger
+        this.initFreeStyleJobs(true);
+        //WorkflowMultiBranch Test
+        workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter, this.branchExcludeFilter, additionalParameters);
+        this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
 
-        //Create WorkflowMultiBranch Job and Test
-        //FIXME
-        //this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, this.getAdditionalParametersForTest());
+
     }
 
 
@@ -345,9 +366,19 @@ public class PipelineTriggerPropertyTest {
         ));
     }
 
-    private void initFreeStyleJobs() throws IOException {
-        this.createTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
-        this.deleteTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
-        this.deleteRunTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
+    private void initFreeStyleJobs(Boolean inFolder) throws IOException {
+        MockFolder triggerFolder = jenkins.createFolder(UUID.randomUUID().toString());
+        if( inFolder) {
+            this.createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
+            this.deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
+            this.deleteRunTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
+
+        }
+        else
+        {
+            this.createTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
+            this.deleteTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
+            this.deleteRunTriggerJob = jenkins.createFreeStyleProject(UUID.randomUUID().toString());
+        }
     }
 }
