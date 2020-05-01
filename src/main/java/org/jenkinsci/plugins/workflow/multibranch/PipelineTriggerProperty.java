@@ -9,6 +9,7 @@ import hudson.model.*;
 import hudson.model.listeners.ItemListener;
 import hudson.util.DescribableList;
 import jenkins.branch.MultiBranchProject;
+import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -215,7 +216,12 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
          */
         @Override
         public boolean isApplicable(Class<? extends AbstractFolder> containerType) {
-            return WorkflowMultiBranchProject.class.isAssignableFrom(containerType);
+            if( WorkflowMultiBranchProject.class.isAssignableFrom(containerType))
+                return true;
+            else if(OrganizationFolder.class.isAssignableFrom(containerType))
+                return true;
+            else
+                return false;
         }
 
         /**
@@ -622,5 +628,6 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             LOGGER.warning(String.format("Item:%s is not instance of WorkflowJob", run.getParent().getFullName()));
         }
     }
+
 
 }
