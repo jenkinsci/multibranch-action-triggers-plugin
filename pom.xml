@@ -40,7 +40,7 @@
     <properties>
         <java.level>8</java.level>
         <java.version>1.8</java.version>
-        <jenkins.version>2.162</jenkins.version>
+        <jenkins.version>2.121.1</jenkins.version>
         <scm-api.version>2.2.7</scm-api.version>
         <workflow-multibranch.version>2.21</workflow-multibranch.version>
         <workflow-step-api.version>2.13</workflow-step-api.version>
