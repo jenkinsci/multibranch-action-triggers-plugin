@@ -9,12 +9,10 @@ import hudson.model.listeners.RunListener;
 
 import hudson.util.DescribableList;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
-public class ExtendedWorkflowMultiBranchProject extends WorkflowMultiBranchProject {
-
-    public ExtendedWorkflowMultiBranchProject(ItemGroup parent, String name) {
-        super(parent, name);
-    }
+public class ExtendedWorkflowMultiBranchProject extends WorkflowBranchProjectFactory {
 
     @Extension
     public static class ItemListenerImpl extends ItemListener {
