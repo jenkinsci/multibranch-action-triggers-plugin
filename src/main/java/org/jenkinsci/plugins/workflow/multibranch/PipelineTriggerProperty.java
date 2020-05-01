@@ -9,15 +9,12 @@ import hudson.model.*;
 import hudson.model.listeners.ItemListener;
 import hudson.util.DescribableList;
 import jenkins.branch.MultiBranchProject;
-import jenkins.branch.MultiBranchProjectFactory;
-import jenkins.branch.MultiBranchProjectFactoryDescriptor;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;

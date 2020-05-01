@@ -1,16 +1,10 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
-import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
 import hudson.Extension;
-import hudson.model.*;
+import hudson.model.Item;
+import hudson.model.Run;
 import hudson.model.listeners.ItemListener;
 import hudson.model.listeners.RunListener;
-
-import hudson.util.DescribableList;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 public class ExtendedWorkflowMultiBranchProject extends WorkflowBranchProjectFactory {
 
