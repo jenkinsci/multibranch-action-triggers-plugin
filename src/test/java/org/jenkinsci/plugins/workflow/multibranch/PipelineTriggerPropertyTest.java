@@ -1,15 +1,11 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
-import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
 import hudson.model.*;
-import hudson.util.DescribableList;
 import hudson.util.RunList;
 import jenkins.branch.BranchSource;
 import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
-
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Before;
 import org.junit.Rule;
@@ -170,17 +166,15 @@ public class PipelineTriggerPropertyTest {
             String branchIncludeFilter,
             String branchExcludeFilter, List<AdditionalParameter> additionalParameters)
             throws Exception {
-        OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class);
+        OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class, UUID.randomUUID().toString());
         organizationFolder.getNavigators().add(new GitDirectorySCMNavigator(this.repoFile.getAbsolutePath()));
-        organizationFolder.getProjectFactories().clear();
-        organizationFolder.getProjectFactories().add(new ExtendedWorkflowMultiBranchProjectFactory(new PipelineTriggerProperty(
+        organizationFolder.getProperties().add(new PipelineTriggerProperty(
                 createTriggerJob.getFullName(),
                 deleteTriggerJob.getFullName(),
                 deleteRunTriggerJob.getFullName(),
                 branchIncludeFilter,
-                branchExcludeFilter,additionalParameters)));
-        organizationFolder.scheduleBuild2(0).getFuture().get();
-        organizationFolder.getComputation().writeWholeLogTo(System.out);
+                branchExcludeFilter,additionalParameters));
+        organizationFolder.scheduleBuild2(0);
         this.jenkins.waitUntilNoActivity();
         assertEquals(1, organizationFolder.getItems().size());
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) organizationFolder.getItem("repo-one");

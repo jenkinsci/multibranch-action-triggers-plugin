@@ -463,14 +463,14 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     private void triggerActionJobs(WorkflowJob workflowJob, Run<?, ?> run, PipelineTriggerBuildAction action) {
         if (!(workflowJob.getParent() instanceof WorkflowMultiBranchProject)) {
-            LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
+            LOGGER.log(Level.FINE, "[MultiBranch Action Triggers Plugin] Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
             return;
         }
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) workflowJob.getParent();
         PipelineTriggerProperty pipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
         if (pipelineTriggerProperty != null) {
             if (checkExcludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
-                LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] {0} excluded by the Exclude Filter", workflowJob.getName());
+                LOGGER.log(Level.INFO, "[MultiBranch Action Triggers Plugin] {0} excluded by the Exclude Filter", workflowJob.getName());
             } else if (checkIncludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
                 if (action.equals(PipelineTriggerBuildAction.createPipelineAction))
                     pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName(), workflowJob.getFullName());
@@ -479,7 +479,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                 else if (action.equals(PipelineTriggerBuildAction.deleteRunPipelineAction))
                     pipelineTriggerProperty.buildActionJobsOnRunDelete(workflowJob.getName(), workflowJob.getFullName(), run.getNumber(), run.getDisplayName());
             } else {
-                LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] {0} not included by the Include Filter", workflowJob.getName());
+                LOGGER.log(Level.INFO, "[MultiBranch Action Triggers Plugin] {0} not included by the Include Filter", workflowJob.getName());
             }
         }
     }
@@ -568,6 +568,16 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                 WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) item;
                 DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties = workflowMultiBranchProject.getProperties();
                 PipelineTriggerProperty pipelineTriggerProperty = properties.get(PipelineTriggerProperty.class);
+                if( pipelineTriggerProperty == null && workflowMultiBranchProject.getParent() instanceof OrganizationFolder) {
+                    //Check Parent Organization Folder
+                    OrganizationFolder organizationFolder = (OrganizationFolder) workflowMultiBranchProject.getParent();
+                    DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> folderProperties = organizationFolder.getProperties();
+                    PipelineTriggerProperty folderPipelineTriggerProperty = folderProperties.get(PipelineTriggerProperty.class);
+                    if( folderPipelineTriggerProperty != null) {
+                        workflowMultiBranchProject.getProperties().add(folderPipelineTriggerProperty);
+                        folderPipelineTriggerProperty.setTriggerJobParameters();
+                    }
+                }
                 if (pipelineTriggerProperty != null)
                     pipelineTriggerProperty.setTriggerJobParameters();
             }
@@ -592,10 +602,10 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             if(pipelineTriggerProperty != null)
                 pipelineTriggerProperty.triggerCreateActionJobs((WorkflowJob) item);
             else
-                LOGGER.warning(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
+                LOGGER.fine(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
         }
         else {
-            LOGGER.warning(String.format("Item:%s is not instance of WorkflowJob", item.getFullName()));
+            LOGGER.fine(String.format("Item:%s is not instance of WorkflowJob", item.getFullName()));
         }
     }
 
@@ -609,10 +619,10 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                 }
             }
             else
-                LOGGER.warning(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
+                LOGGER.fine(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
         }
         else {
-            LOGGER.warning(String.format("Item:%s is not instance of WorkflowJob", item.getFullName()));
+            LOGGER.fine(String.format("Item:%s is not instance of WorkflowJob", item.getFullName()));
         }
     }
 
@@ -622,10 +632,10 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             if(pipelineTriggerProperty != null)
                 pipelineTriggerProperty.triggerActionJobsOnRunDelete((WorkflowJob) run.getParent(), run);
             else
-                LOGGER.warning(String.format("PipelineTriggerProperty is null in Item:%s", run.getParent().getFullName()));
+                LOGGER.fine(String.format("PipelineTriggerProperty is null in Item:%s", run.getParent().getFullName()));
         }
         else {
-            LOGGER.warning(String.format("Item:%s is not instance of WorkflowJob", run.getParent().getFullName()));
+            LOGGER.fine(String.format("Item:%s is not instance of WorkflowJob", run.getParent().getFullName()));
         }
     }
 

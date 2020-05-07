@@ -40,14 +40,14 @@
     <properties>
         <java.level>8</java.level>
         <java.version>1.8</java.version>
-        <jenkins.version>2.121.1</jenkins.version>
-        <scm-api.version>2.2.7</scm-api.version>
+        <jenkins.version>2.164.3</jenkins.version>
+        <scm-api.version>2.6.3</scm-api.version>
         <workflow-multibranch.version>2.21</workflow-multibranch.version>
-        <workflow-step-api.version>2.13</workflow-step-api.version>
+        <workflow-step-api.version>2.19</workflow-step-api.version>
         <workflow-scm-step-plugin.version>2.4</workflow-scm-step-plugin.version>
         <workflow-support.version>2.17</workflow-support.version>
         <workflow-cps.version>2.53</workflow-cps.version>
-        <git-plugin.version>3.9.1</git-plugin.version>
+        <git-plugin.version>3.9.3</git-plugin.version>
         <minimumJavaVersion>1.8</minimumJavaVersion>
         <junit.version>1.6</junit.version>
     </properties>
@@ -69,13 +69,26 @@
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>structs</artifactId>
-            <version>1.17</version>
+            <artifactId>token-macro</artifactId>
+            <version>1.12.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>github-organization-folder</artifactId>
-            <version>1.0</version>
+            <artifactId>github-branch-source</artifactId>
+            <version>2.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>structs</artifactId>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -170,11 +183,12 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <configuration>
+                    <minimumJavaVersion>1.8</minimumJavaVersion>
                     <loggers>
                         <org.jenkinsci.plugins.workflow.multibranch>FINE</org.jenkinsci.plugins.workflow.multibranch>
                     </loggers>
                 </configuration>
-                <version>2.1</version>
+                <version>3.14</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
