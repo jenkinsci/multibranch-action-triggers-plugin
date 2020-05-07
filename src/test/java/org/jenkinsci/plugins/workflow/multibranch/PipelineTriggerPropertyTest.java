@@ -6,7 +6,9 @@ import jenkins.branch.BranchSource;
 import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
+import org.apache.xpath.operations.Or;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -180,6 +182,12 @@ public class PipelineTriggerPropertyTest {
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) organizationFolder.getItem("repo-one");
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
+        OrganizationFolder reloadedOrganizationFolder = (OrganizationFolder) this.jenkins.jenkins.getItem(organizationFolder.getName());
+        PipelineTriggerProperty reloadedPipelinePropertyTrigger = reloadedOrganizationFolder.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertNotNull(reloadedPipelinePropertyTrigger);
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getCreateActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getDeleteActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getActionJobsOnRunDelete().size());
         return workflowMultiBranchProject;
 
     }
@@ -203,6 +211,12 @@ public class PipelineTriggerPropertyTest {
                 branchExcludeFilter, additionalParameters));
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
+        WorkflowMultiBranchProject reloadedWorkflowMultiBranchProject = (WorkflowMultiBranchProject) this.jenkins.jenkins.getItem(workflowMultiBranchProject.getName());
+        PipelineTriggerProperty reloadedPipelineTriggerProperty = reloadedWorkflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertNotNull(reloadedPipelineTriggerProperty);
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getCreateActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getDeleteActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getActionJobsOnRunDelete().size());
         return workflowMultiBranchProject;
     }
     public void checkResults(
