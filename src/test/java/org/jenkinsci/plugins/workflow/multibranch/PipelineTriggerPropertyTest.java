@@ -1,16 +1,14 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
-import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
 import hudson.model.*;
-import hudson.util.DescribableList;
 import hudson.util.RunList;
 import jenkins.branch.BranchSource;
 import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
-
+import org.apache.xpath.operations.Or;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -170,22 +168,26 @@ public class PipelineTriggerPropertyTest {
             String branchIncludeFilter,
             String branchExcludeFilter, List<AdditionalParameter> additionalParameters)
             throws Exception {
-        OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class);
+        OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class, UUID.randomUUID().toString());
         organizationFolder.getNavigators().add(new GitDirectorySCMNavigator(this.repoFile.getAbsolutePath()));
-        organizationFolder.getProjectFactories().clear();
-        organizationFolder.getProjectFactories().add(new ExtendedWorkflowMultiBranchProjectFactory(new PipelineTriggerProperty(
+        organizationFolder.getProperties().add(new PipelineTriggerProperty(
                 createTriggerJob.getFullName(),
                 deleteTriggerJob.getFullName(),
                 deleteRunTriggerJob.getFullName(),
                 branchIncludeFilter,
-                branchExcludeFilter,additionalParameters)));
-        organizationFolder.scheduleBuild2(0).getFuture().get();
-        organizationFolder.getComputation().writeWholeLogTo(System.out);
+                branchExcludeFilter,additionalParameters));
+        organizationFolder.scheduleBuild2(0);
         this.jenkins.waitUntilNoActivity();
         assertEquals(1, organizationFolder.getItems().size());
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) organizationFolder.getItem("repo-one");
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
+        OrganizationFolder reloadedOrganizationFolder = (OrganizationFolder) this.jenkins.jenkins.getItem(organizationFolder.getName());
+        PipelineTriggerProperty reloadedPipelinePropertyTrigger = reloadedOrganizationFolder.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertNotNull(reloadedPipelinePropertyTrigger);
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getCreateActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getDeleteActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelinePropertyTrigger.getActionJobsOnRunDelete().size());
         return workflowMultiBranchProject;
 
     }
@@ -209,6 +211,12 @@ public class PipelineTriggerPropertyTest {
                 branchExcludeFilter, additionalParameters));
         this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
         this.jenkins.waitUntilNoActivity();
+        WorkflowMultiBranchProject reloadedWorkflowMultiBranchProject = (WorkflowMultiBranchProject) this.jenkins.jenkins.getItem(workflowMultiBranchProject.getName());
+        PipelineTriggerProperty reloadedPipelineTriggerProperty = reloadedWorkflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertNotNull(reloadedPipelineTriggerProperty);
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getCreateActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getDeleteActionJobs().size());
+        Assert.assertEquals(1, reloadedPipelineTriggerProperty.getActionJobsOnRunDelete().size());
         return workflowMultiBranchProject;
     }
     public void checkResults(
