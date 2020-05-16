@@ -7,6 +7,7 @@ import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
 import org.apache.xpath.operations.Or;
+import org.codehaus.groovy.ast.stmt.AssertStatement;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,6 +83,52 @@ public class PipelineTriggerPropertyTest {
     @Before
     public void setup() throws Exception {
         this.repoFile = this.initSourceCodeRepo();
+    }
+
+
+    @Test
+    public void testUpdateOrganizationFolder() throws Exception {
+        List additionalParameters = this.getAdditionalParametersForTest();
+        this.initFreeStyleJobs(false);
+        OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class, UUID.randomUUID().toString());
+        organizationFolder.getNavigators().add(new GitDirectorySCMNavigator(this.repoFile.getAbsolutePath()));
+        organizationFolder.getProperties().add(new PipelineTriggerProperty(
+                createTriggerJob.getFullName(),
+                deleteTriggerJob.getFullName(),
+                deleteRunTriggerJob.getFullName(),
+                branchIncludeFilter,
+                branchExcludeFilter,additionalParameters));
+        organizationFolder.scheduleBuild2(0);
+        this.jenkins.waitUntilNoActivity();
+        WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) organizationFolder.getItem("repo-one");
+        this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
+        this.jenkins.waitUntilNoActivity();
+        PipelineTriggerProperty workflowPipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertEquals(1, workflowPipelineTriggerProperty.getCreateActionJobs().size());
+        Assert.assertEquals(1, workflowPipelineTriggerProperty.getDeleteActionJobs().size());
+        Assert.assertEquals(1, workflowPipelineTriggerProperty.getActionJobsOnRunDelete().size());
+        Assert.assertEquals(branchIncludeFilter, workflowPipelineTriggerProperty.getBranchIncludeFilter());
+        Assert.assertEquals(branchExcludeFilter, workflowPipelineTriggerProperty.getBranchExcludeFilter());
+        Assert.assertEquals(additionalParameters.size(), workflowPipelineTriggerProperty.getAdditionalParameters().size());
+        PipelineTriggerProperty organizationPipelineTriggerProperty = organizationFolder.getProperties().get(PipelineTriggerProperty.class);
+        organizationPipelineTriggerProperty.setCreateActionJobsToTrigger("");
+        organizationPipelineTriggerProperty.setDeleteActionJobsToTrigger("");
+        organizationPipelineTriggerProperty.setActionJobsToTriggerOnRunDelete("");
+        organizationPipelineTriggerProperty.setBranchIncludeFilter("none");
+        organizationPipelineTriggerProperty.setBranchExcludeFilter("none");
+        organizationPipelineTriggerProperty.setAdditionalParameters(new ArrayList<>());
+        organizationFolder.scheduleBuild2(0);
+        this.jenkins.waitUntilNoActivity();
+        workflowMultiBranchProject = (WorkflowMultiBranchProject) organizationFolder.getItem("repo-one");
+        this.indexMultiBranchPipeline(workflowMultiBranchProject, this.expectedPipelineCount);
+        this.jenkins.waitUntilNoActivity();
+        workflowPipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        Assert.assertEquals(0, workflowPipelineTriggerProperty.getCreateActionJobs().size());
+        Assert.assertEquals(0, workflowPipelineTriggerProperty.getDeleteActionJobs().size());
+        Assert.assertEquals(0, workflowPipelineTriggerProperty.getActionJobsOnRunDelete().size());
+        Assert.assertEquals("none", workflowPipelineTriggerProperty.getBranchIncludeFilter());
+        Assert.assertEquals("none", workflowPipelineTriggerProperty.getBranchExcludeFilter());
+        Assert.assertEquals(0, workflowPipelineTriggerProperty.getAdditionalParameters().size());
     }
 
     @Test

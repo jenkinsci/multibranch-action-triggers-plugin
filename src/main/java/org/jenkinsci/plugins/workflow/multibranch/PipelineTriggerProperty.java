@@ -563,6 +563,26 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     public static class PipelineTriggerPropertyListener extends ItemListener{
         @Override
         public void onUpdated(Item item) {
+            super.onCreated(item);
+            if( item instanceof OrganizationFolder) {
+                OrganizationFolder organizationFolder = (OrganizationFolder) item;
+                PipelineTriggerProperty pipelineTriggerProperty = organizationFolder.getProperties().get(PipelineTriggerProperty.class);
+                if(pipelineTriggerProperty != null) {
+                    for (MultiBranchProject multiBranchProject : organizationFolder.getItems()) {
+                        if (!(multiBranchProject instanceof WorkflowMultiBranchProject))
+                            continue;
+                        if (pipelineTriggerProperty != null) {
+                            PipelineTriggerProperty jobPipelineTriggerProperty = (PipelineTriggerProperty) multiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+                            multiBranchProject.getProperties().remove(jobPipelineTriggerProperty);
+                            multiBranchProject.getProperties().add(pipelineTriggerProperty);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onCreated(Item item) {
             super.onUpdated(item);
             if( item instanceof WorkflowMultiBranchProject) {
                 WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) item;

@@ -105,6 +105,20 @@ public class GithubFolderPipelineTriggerPropertyTest extends Assert {
         Assert.assertEquals(1, deleteTriggerJob.getLastBuild().number);
         Assert.assertEquals("SUCCESS", deleteTriggerJob.getLastBuild().getResult().toString());
 
+        PipelineTriggerProperty organizationPipelineTriggerProperty = organizationFolder.getProperties().get(PipelineTriggerProperty.class);
+        organizationPipelineTriggerProperty.setCreateActionJobsToTrigger("");
+        organizationPipelineTriggerProperty.setDeleteActionJobsToTrigger("");
+        organizationPipelineTriggerProperty.setActionJobsToTriggerOnRunDelete("");
+        organizationFolder.scheduleBuild2(0);
+        organizationFolder.scheduleBuild2(0);
+        workflowMultiBranchProject = this.waitForIndex(organizationFolder,"multibranch-action-triggers-test");
+        PipelineTriggerProperty workflowPipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        assertEquals(0, workflowPipelineTriggerProperty.getCreateActionJobs().size());
+        assertEquals(0, workflowPipelineTriggerProperty.getDeleteActionJobs().size());
+        assertEquals(0, workflowPipelineTriggerProperty.getActionJobsOnRunDelete().size());
+
+
+
     }
 
     private WorkflowJob waitForIndex(WorkflowMultiBranchProject workflowMultiBranchProject, String branchName) throws Exception {
