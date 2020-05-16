@@ -571,11 +571,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                     for (MultiBranchProject multiBranchProject : organizationFolder.getItems()) {
                         if (!(multiBranchProject instanceof WorkflowMultiBranchProject))
                             continue;
-                        if (pipelineTriggerProperty != null) {
                             PipelineTriggerProperty jobPipelineTriggerProperty = (PipelineTriggerProperty) multiBranchProject.getProperties().get(PipelineTriggerProperty.class);
                             multiBranchProject.getProperties().remove(jobPipelineTriggerProperty);
                             multiBranchProject.getProperties().add(pipelineTriggerProperty);
-                        }
                     }
                 }
             }
