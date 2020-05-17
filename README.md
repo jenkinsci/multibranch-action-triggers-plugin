@@ -104,10 +104,12 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     
 Reporting Issues
 ======
-1. Login [Jenkins Jira](https://issues.jenkins-ci.org/secure/Dashboard.jspa) 
-2. Create issue with component name "multibranch-action-triggers-plugin"
+Please create issue in this repository.
 
-Thanks
+[Create Issue](https://github.com/jenkinsci/multibranch-action-triggers-plugin/issues/new/choose)
+
+
+Thank You!
 =================
 If you feel your self generous today, you can buy me a coffee : )
 <br>
