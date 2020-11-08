@@ -48,6 +48,8 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     static final String projectFullNameParameterKey = "SOURCE_PROJECT_FULL_NAME";
     static final String runNumberParameterKey = "SOURCE_RUN_NUMBER";
     static final String runDisplayNameParameterKey = "SOURCE_RUN_DISPLAY_NAME";
+    static final String sourceBranchName = "SOURCE_BRANCH_NAME";
+    static final String targetBranchName = "TARGET_BRANCH_NAME";
     private String branchIncludeFilter = "*";
     private String branchExcludeFilter = "";
     private List<AdditionalParameter> additionalParameters = new ArrayList<>();
