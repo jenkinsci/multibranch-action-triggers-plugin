@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.multibranch;
 import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
-import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
@@ -13,7 +12,6 @@ import jenkins.branch.Branch;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.github_branch_source.BranchSCMHead;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -395,6 +393,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        Also this value will be passed as StringParameterDefinition
      * @param projectFullName Full name of the project.
      *                        Also this value will be passed as StringParameterDefinition
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition.
+     *                          Applicable only for PR jobs
      */
     private void buildCreateActionJobs(String projectName, String projectFullName, String sourceBranchName, String targetBranchName) {
         this.setJobParametersForCreateActionTriggers();
@@ -408,6 +409,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        Also this value will be passed as StringParameterDefinition
      * @param projectFullName Full name of the project.
      *                        Also this value will be passed as StringParameterDefinition
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
     private void buildDeleteActionJobs(String projectName, String projectFullName, String sourceBranchName, String targetBranchName) {
         this.setJobParameterForDeleteActionTriggers();
@@ -425,6 +429,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        This value will be passed as StringParameterDefinition.
      * @param runDisplayName  Display Name of the upstream build.
      *                        This value will be passed as StringParameterDefinition.
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
     private void buildActionJobsOnRunDelete(String projectName, String projectFullName, Integer runNumber, String runDisplayName, String sourceBranchName, String targetBranchName) {
         this.setJobParameterForJobsOnRunDeleteTriggers();
@@ -443,6 +450,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      * @param runDisplayName  Display Name of the upstream build, or null if the upstream trigger is not a Run.
      *                        This value will be passed as StringParameterDefinition.
      * @param jobsToBuild     List of Jobs to build
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
     private void buildJobs(
             String projectName,
@@ -673,6 +683,11 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         }
     }
 
+    /**
+     * Get Pull Request related information from workflow job.
+     * @param workflowJob Indexed job
+     * @return PullRequestInfo
+     */
     private PullRequestInfo getPullRequestInfo(WorkflowJob workflowJob) {
         BranchJobProperty branchJobProperty = workflowJob.getProperty(BranchJobProperty.class);
         if(branchJobProperty == null) {
@@ -690,22 +705,15 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead pullRequestSCMHead = (org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead) branch.getHead();
             return new PullRequestInfo(pullRequestSCMHead.getSourceBranch(), pullRequestSCMHead.getTarget().getName());
         }
-        else if ( branch.getHead() instanceof com.cloudbees.jenkins.plugins.bitbucket.BranchSCMHead) {
-            LOGGER.fine(String.format("PR SCM Head is instance of %s", com.cloudbees.jenkins.plugins.bitbucket.BranchSCMHead.class.getName()));
-            com.cloudbees.jenkins.plugins.bitbucket.BranchSCMHead branchSCMHead = (com.cloudbees.jenkins.plugins.bitbucket.BranchSCMHead) branch.getHead();
-            return new PullRequestInfo(branchSCMHead.getName(),"");
-        }
-        else if (branch.getHead() instanceof org.jenkinsci.plugins.github_branch_source.BranchSCMHead) {
-            LOGGER.fine(String.format("PR SCM Head is instance of %s", org.jenkinsci.plugins.github_branch_source.BranchSCMHead.class.getName()));
-            org.jenkinsci.plugins.github_branch_source.BranchSCMHead branchSCMHead = (BranchSCMHead) branch.getHead();
-            return new PullRequestInfo(branchSCMHead.getName(), "");
-        }
         else {
-            LOGGER.fine("PR SCM Head type is not implemented. Returning empty PullRequestInfo");
+            LOGGER.fine(String.format("PR SCM Head (type: %s) is not implemented. Returning empty PullRequestInfo", branch.getHead().getClass().getName()));
             return new PullRequestInfo("","");
         }
     }
 
+    /**
+     * Private class model for Pull Request Information
+     */
     private class PullRequestInfo {
         private String sourceBranchName;
         private String targetBranchName;
