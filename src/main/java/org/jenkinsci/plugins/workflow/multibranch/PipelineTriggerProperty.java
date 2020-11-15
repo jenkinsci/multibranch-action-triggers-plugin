@@ -12,6 +12,8 @@ import jenkins.branch.Branch;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
+import jenkins.scm.api.SCMHead;
+import jenkins.scm.api.mixin.ChangeRequestSCMHead2;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -688,48 +690,24 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      * @param workflowJob Indexed job
      * @return PullRequestInfo
      */
-    private PullRequestInfo getPullRequestInfo(WorkflowJob workflowJob) {
+    public PullRequestInfo getPullRequestInfo(WorkflowJob workflowJob) {
         BranchJobProperty branchJobProperty = workflowJob.getProperty(BranchJobProperty.class);
         if(branchJobProperty == null) {
             LOGGER.fine("BranchJobProperty not found. Returning empty PullRequestInfo");
             return new PullRequestInfo("","");
         }
         Branch branch = branchJobProperty.getBranch();
-        if( branch.getHead() instanceof com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead) {
-            LOGGER.fine(String.format("PR SCM Head is instance of %s", com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead.class.getName()));
-            com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead pullRequestSCMHead = (com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead) branch.getHead();
-            return new PullRequestInfo(pullRequestSCMHead.getBranchName(), pullRequestSCMHead.getTarget().getName());
+        SCMHead scmHead = branch.getHead();
+        if( scmHead instanceof ChangeRequestSCMHead2) {
+            ChangeRequestSCMHead2 changeRequestSCMHead2 = (ChangeRequestSCMHead2) branch.getHead();
+            String sourceBranchName = changeRequestSCMHead2.getOriginName();
+            String targetBranchName = changeRequestSCMHead2.getTarget().getName();
+            return new PullRequestInfo(sourceBranchName, targetBranchName);
         }
-        else if (branch.getHead() instanceof org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead) {
-            LOGGER.fine(String.format("PR SCM Head is instance of %s", org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead.class.getName()));
-            org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead pullRequestSCMHead = (org.jenkinsci.plugins.github_branch_source.PullRequestSCMHead) branch.getHead();
-            return new PullRequestInfo(pullRequestSCMHead.getSourceBranch(), pullRequestSCMHead.getTarget().getName());
-        }
-        else {
-            LOGGER.fine(String.format("PR SCM Head (type: %s) is not implemented. Returning empty PullRequestInfo", branch.getHead().getClass().getName()));
-            return new PullRequestInfo("","");
+        else
+        {
+            return new PullRequestInfo(scmHead.getName(),"");
         }
     }
-
-    /**
-     * Private class model for Pull Request Information
-     */
-    private class PullRequestInfo {
-        private String sourceBranchName;
-        private String targetBranchName;
-        private PullRequestInfo(String sourceBranchName, String targetBranchName) {
-            this.sourceBranchName = sourceBranchName;
-            this.targetBranchName = targetBranchName;
-        }
-
-        public String getSourceBranchName() {
-            return sourceBranchName;
-        }
-
-        public String getTargetBranchName() {
-            return targetBranchName;
-        }
-    }
-
 
 }

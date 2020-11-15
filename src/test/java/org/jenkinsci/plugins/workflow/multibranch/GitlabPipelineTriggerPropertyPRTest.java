@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource;
+import com.cloudbees.jenkins.plugins.bitbucket.OriginPullRequestDiscoveryTrait;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -8,20 +10,20 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
+import hudson.model.PersistentDescriptor;
 import hudson.util.RunList;
+import io.jenkins.plugins.gitlabbranchsource.BranchDiscoveryTrait;
+import io.jenkins.plugins.gitlabbranchsource.GitLabSCMSource;
+import io.jenkins.plugins.gitlabbranchsource.GitLabSCMSourceBuilder;
+import io.jenkins.plugins.gitlabbranchsource.OriginMergeRequestDiscoveryTrait;
+import io.jenkins.plugins.gitlabserverconfig.servers.GitLabServer;
+import io.jenkins.plugins.gitlabserverconfig.servers.GitLabServers;
 import jenkins.branch.BranchSource;
-import jenkins.branch.OrganizationFolder;
-import jenkins.plugins.git.GitSCMSource;
+import jenkins.model.GlobalConfiguration;
 import jenkins.plugins.git.GitSampleRepoRule;
-import jenkins.scm.api.mixin.ChangeRequestCheckoutStrategy;
-import org.jenkinsci.plugins.github.extension.status.GitHubReposSource;
-import org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait;
-import org.jenkinsci.plugins.github_branch_source.GitHubSCMSource;
-import org.jenkinsci.plugins.github_branch_source.GitHubSCMSourceBuilder;
-import org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait;
+import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -39,38 +41,23 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class PipelineTriggerPropertyPRTest {
+public class GitlabPipelineTriggerPropertyPRTest {
 
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
-    @Rule
-    public GitSampleRepoRule gitRepo = new GitSampleRepoRule();
-    @Rule
-    public GitSampleRepoRule organizationRepo1 = new GitSampleRepoRule();
-    @Rule
-    public GitSampleRepoRule organizationRepo2 = new GitSampleRepoRule();
-    @Rule
-    public GitSampleRepoRule organizationRepo3 = new GitSampleRepoRule();
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private File repoFile;
-    private static final String jenkinsFile = "Jenkinsfile";
-    private String pipelineScript = "//No Content Necessary";
-    private String pipelineFile = "Jenkinsfile";
-    private String createTriggerJobName = "CreateTriggerJob";
-    private String deleteTriggerJobName = "DeleteTriggerJob";
-    private String deleteRunTriggerJobName = "DeleteRunTriggerJob";
-    private List<String> branchNames = Arrays.asList("master");
-    private List<String> prNames = Arrays.asList("PR-1");
-    private int expectedPipelineCount = this.branchNames.size() + this.prNames.size();
+    private final List<String> branchNames = Arrays.asList("master");
+    private final List<String> prNames = Arrays.asList("MR-1-merge");
+    private final int expectedPipelineCount = this.branchNames.size() + this.prNames.size();
     private String branchIncludeFilter;
     private String branchExcludeFilter;
-
-
+    private GitLabServer gitLabServer;
+    private final String owner = "aytuncbeken";
+    private final String repository = "aytuncbeken/multibranch-action-triggers-test";
     private FreeStyleProject createTriggerJob;
     private FreeStyleProject deleteTriggerJob;
-    protected FreeStyleProject deleteRunTriggerJob;
+    private FreeStyleProject deleteRunTriggerJob;
+    private BaseStandardCredentials credentials;
 
     @Parameterized.Parameters
     public static Iterable<Object[]> data() {
@@ -79,26 +66,27 @@ public class PipelineTriggerPropertyPRTest {
         });
     }
 
-
-    public PipelineTriggerPropertyPRTest(String branchIncludeFilter, String branchExcludeFilter) {
+    public GitlabPipelineTriggerPropertyPRTest(String branchIncludeFilter, String branchExcludeFilter) {
         this.branchIncludeFilter = branchIncludeFilter;
         this.branchExcludeFilter = branchExcludeFilter;
     }
 
-
     @Test
-    public void testGithubPullRequest() throws Exception {
-        if( System.getProperty("github.password") == null) {
-            System.out.println("Github Password not set, skipping test");
+    public void testPR() throws Exception {
+        if( System.getProperty("gitlab.password") == null) {
+            System.out.println("BitBucket Password not set, skipping test");
             return;
         }
+        String password = System.getProperty("gitlab.password");
+        credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, UUID.randomUUID().toString(),"",this.owner, password);
+        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Collections.singletonList(credentials)));
+
         List additionalParameters = new ArrayList();
         //Create Free Style Jobs for Testing Trigger
         this.initFreeStyleJobs(false);
         WorkflowMultiBranchProject workflowMultiBranchProject = this.createWorkflowMultiBranchJobWithTriggers(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter,  additionalParameters);
         this.checkResults(createTriggerJob, deleteTriggerJob, deleteRunTriggerJob, this.branchIncludeFilter,this.branchExcludeFilter, additionalParameters,workflowMultiBranchProject);
     }
-
 
     private WorkflowMultiBranchProject createWorkflowMultiBranchJobWithTriggers(
                 Job createTriggerJob,
@@ -108,15 +96,18 @@ public class PipelineTriggerPropertyPRTest {
                 String branchExcludeFilter, List<AdditionalParameter> additionalParameters)
             throws Exception {
 
+        gitLabServer = new GitLabServer("https://gitlab.com","gitlab",credentials.getId());
+        GitLabServers gitlabServers = (GitLabServers) jenkins.getInstance().getDescriptor(GitLabServers.class);
+        gitlabServers.addServer(gitLabServer);
+        gitlabServers.save();
+        this.jenkins.getInstance().save();
+
+
         //Create Multi Branch Pipeline Job with Git Repo
-        BaseStandardCredentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, UUID.randomUUID().toString(),"","aytuncbeken", System.getProperty("github.password"));
-        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays.asList(credentials)));
         WorkflowMultiBranchProject workflowMultiBranchProject = this.jenkins.createProject(WorkflowMultiBranchProject.class, UUID.randomUUID().toString());
-        GitHubSCMSource gitHubSCMSource = new GitHubSCMSource("", "", "https://github.com/aytuncbeken/multibranch-action-triggers-test.git", true);
-        gitHubSCMSource.setCredentialsId(credentials.getId());
-        gitHubSCMSource.setBuildOriginPRMerge(true);
-        gitHubSCMSource.setBuildOriginBranch(true);
-        workflowMultiBranchProject.setSourcesList(Arrays.asList(new BranchSource(gitHubSCMSource)));
+        GitLabSCMSource gitLabSCMSource = new GitLabSCMSource(gitLabServer.getName(),this.owner,this.repository);
+        gitLabSCMSource.setTraits(Arrays.asList(new BranchDiscoveryTrait(true,false), new WildcardSCMHeadFilterTrait("*",""), new OriginMergeRequestDiscoveryTrait(1)));
+        workflowMultiBranchProject.setSourcesList(Arrays.asList(new BranchSource(gitLabSCMSource)));
         workflowMultiBranchProject.getProperties().add(new PipelineTriggerProperty(
                 createTriggerJob.getFullName(),
                 deleteTriggerJob.getFullName(),
@@ -133,7 +124,6 @@ public class PipelineTriggerPropertyPRTest {
         Assert.assertEquals(1, reloadedPipelineTriggerProperty.getActionJobsOnRunDelete().size());
         return workflowMultiBranchProject;
     }
-
 
     public void checkResults(
             Job createTriggerJob,
@@ -169,14 +159,9 @@ public class PipelineTriggerPropertyPRTest {
         this.checkTriggeredJobs(deleteRunTriggerJob, branchIncludeFilter, branchExcludeFilter, 1, Collections.singletonList(3), Collections.singletonList("#3"), workflowMultiBranchProject,additionalParameters);
 
         //Change Branch Source and set Include field to None to test Pipeline Delete by Branch Indexing
-        BaseStandardCredentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, UUID.randomUUID().toString(),"","aytuncbeken", System.getProperty("github.password"));
-        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays.asList(credentials)));
-        GitHubSCMSource gitHubSCMSource = new GitHubSCMSource("", "", "https://github.com/aytuncbeken/multibranch-action-triggers-test.git", true);
-        gitHubSCMSource.setCredentialsId(credentials.getId());
-        gitHubSCMSource.setBuildOriginPRMerge(false);
-        gitHubSCMSource.setBuildOriginBranch(false);
-        workflowMultiBranchProject.getSourcesList().clear();
-        workflowMultiBranchProject.getSourcesList().add(new BranchSource(gitHubSCMSource));
+        GitLabSCMSource gitLabSCMSource = new GitLabSCMSource(gitLabServer.getName(),this.owner,this.repository);
+        gitLabSCMSource.setTraits(Arrays.asList());
+        workflowMultiBranchProject.setSourcesList(Arrays.asList(new BranchSource(gitLabSCMSource)));
         this.indexMultiBranchPipeline(workflowMultiBranchProject, 0);
         this.jenkins.waitUntilNoActivity();
 
@@ -220,11 +205,22 @@ public class PipelineTriggerPropertyPRTest {
             if (buildVariables.containsKey(PipelineTriggerProperty.projectNameParameterKey) && buildVariables.containsKey(PipelineTriggerProperty.projectFullNameParameterKey)) {
                 String projectName = buildVariables.get(PipelineTriggerProperty.projectNameParameterKey);
                 String projectFullName = buildVariables.get(PipelineTriggerProperty.projectFullNameParameterKey);
+                String sourceBranchNameVar = buildVariables.get(PipelineTriggerProperty.sourceBranchName);
+                String targetBranchNameVar = buildVariables.get(PipelineTriggerProperty.targetBranchName);
                 if ( !(filteredBranches.contains(projectName))) {
                     throw new Exception("Trigger Pipeline name not found in the Job Parameters");
                 }
                 if( !projectFullName.equals(callerJob.getFullName() + "/" + projectName) ) {
                     throw new Exception("Trigger Pipeline Full Name not found in the Job Parameter");
+                }
+                if(!projectName.equals(this.branchNames.get(0)) ) {
+                    String sourceBranchName = "test-branch";
+                    if (!sourceBranchNameVar.equals(sourceBranchName)) {
+                        throw new Exception("Trigger Pipeline Source Branch Name not found in Job Parameter");
+                    }
+                    if (!targetBranchNameVar.equals(this.branchNames.get(0))) {
+                        throw new Exception("Trigger Pipeline Target Branch Name not found in Job Parameter");
+                    }
                 }
             } else {
                 throw new Exception(PipelineTriggerProperty.projectNameParameterKey + " key not found in Build Variables");
@@ -287,7 +283,6 @@ public class PipelineTriggerPropertyPRTest {
             this.createTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
             this.deleteTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
             this.deleteRunTriggerJob = triggerFolder.createProject(FreeStyleProject.class, UUID.randomUUID().toString());
-
         }
         else
         {

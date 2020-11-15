@@ -10,6 +10,8 @@ import jenkins.branch.OrganizationFolder;
 import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.apache.xpath.operations.Or;
+import org.jenkinsci.plugins.github.config.GitHubPluginConfig;
+import org.jenkinsci.plugins.github.config.GitHubServerConfig;
 import org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait;
 import org.jenkinsci.plugins.github_branch_source.GitHubSCMNavigator;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -32,23 +34,36 @@ public class GithubFolderPipelineTriggerPropertyTest extends Assert {
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
 
+    private final String username = "aytuncbeken";
+    private final String repository = "multibranch-action-triggers-test";
+    private final String branch = "master";
+
     @Test
     public void createGitHubOrganizationFolder() throws Exception {
         if( System.getProperty("github.password") == null) {
             System.out.println("Github Password not set, skipping test");
             return;
         }
+        String password = System.getProperty("github.password");
+        BaseStandardCredentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, UUID.randomUUID().toString(),"",this.username,password);
+        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays.asList(credentials)));
+
+        GitHubPluginConfig gitHubPluginConfig = (GitHubPluginConfig) this.jenkins.getInstance().getDescriptor(GitHubPluginConfig.class);
+        gitHubPluginConfig.setConfigs(Arrays.asList(new GitHubServerConfig(credentials.getId())));
+        gitHubPluginConfig.save();
+        this.jenkins.getInstance().save();
+
         FreeStyleProject createTriggerJob = this.jenkins.createFreeStyleProject(UUID.randomUUID().toString());
         FreeStyleProject deleteTriggerJob = this.jenkins.createFreeStyleProject(UUID.randomUUID().toString());
         FreeStyleProject deleteRunTriggerJob = this.jenkins.createFreeStyleProject(UUID.randomUUID().toString());
-        BaseStandardCredentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, UUID.randomUUID().toString(),"","aytuncbeken", System.getProperty("github.password"));
-        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays.asList(credentials)));
-        GitHubSCMNavigator gitHubSCMNavigator = new GitHubSCMNavigator("aytuncbeken");
+       GitHubSCMNavigator gitHubSCMNavigator = new GitHubSCMNavigator(this.username);
         gitHubSCMNavigator.setTraits(Arrays.asList(
-                new WildcardSCMHeadFilterTrait("master", ""),
-                new WildcardSCMSourceFilterTrait("multibranch-action-triggers-test",""),
+                new WildcardSCMHeadFilterTrait(this.branch, ""),
+                new WildcardSCMSourceFilterTrait(this.repository,""),
                 new BranchDiscoveryTrait(true, false)
         ));
+
+
         gitHubSCMNavigator.setCredentialsId(credentials.getId());
         OrganizationFolder organizationFolder = this.jenkins.createProject(OrganizationFolder.class, UUID.randomUUID().toString());
         organizationFolder.getNavigators().add(gitHubSCMNavigator);
@@ -60,9 +75,9 @@ public class GithubFolderPipelineTriggerPropertyTest extends Assert {
                 "",new ArrayList<>()));
         organizationFolder.scheduleBuild2(0);
         organizationFolder.scheduleBuild2(0);
-        WorkflowMultiBranchProject workflowMultiBranchProject = this.waitForIndex(organizationFolder,"multibranch-action-triggers-test");
+        WorkflowMultiBranchProject workflowMultiBranchProject = this.waitForIndex(organizationFolder,this.repository);
         workflowMultiBranchProject.scheduleBuild2(0);
-        WorkflowJob workflowJob = this.waitForIndex(workflowMultiBranchProject, "master");
+        WorkflowJob workflowJob = this.waitForIndex(workflowMultiBranchProject, this.branch);
         WorkflowRun run = workflowJob.getLastBuild();
         while (run.getResult() == null) {
             System.out.println("Waiting for Workflow Job to finish:" + run.getResult());
@@ -111,7 +126,7 @@ public class GithubFolderPipelineTriggerPropertyTest extends Assert {
         organizationPipelineTriggerProperty.setActionJobsToTriggerOnRunDelete("");
         organizationFolder.scheduleBuild2(0);
         organizationFolder.scheduleBuild2(0);
-        workflowMultiBranchProject = this.waitForIndex(organizationFolder,"multibranch-action-triggers-test");
+        workflowMultiBranchProject = this.waitForIndex(organizationFolder,this.repository);
         PipelineTriggerProperty workflowPipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
         assertEquals(0, workflowPipelineTriggerProperty.getCreateActionJobs().size());
         assertEquals(0, workflowPipelineTriggerProperty.getDeleteActionJobs().size());
