@@ -6,6 +6,7 @@ import jenkins.branch.BranchSource;
 import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.plugins.git.GitSampleRepoRule;
+import jenkins.scm.impl.mock.MockChangeRequestSCMHead;
 import org.apache.xpath.operations.Or;
 import org.codehaus.groovy.ast.stmt.AssertStatement;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;

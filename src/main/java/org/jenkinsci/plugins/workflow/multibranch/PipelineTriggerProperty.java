@@ -8,9 +8,12 @@ import hudson.Util;
 import hudson.model.*;
 import hudson.model.listeners.ItemListener;
 import hudson.util.DescribableList;
+import jenkins.branch.Branch;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
+import jenkins.scm.api.SCMHead;
+import jenkins.scm.api.mixin.ChangeRequestSCMHead2;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -48,6 +51,8 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     static final String projectFullNameParameterKey = "SOURCE_PROJECT_FULL_NAME";
     static final String runNumberParameterKey = "SOURCE_RUN_NUMBER";
     static final String runDisplayNameParameterKey = "SOURCE_RUN_DISPLAY_NAME";
+    static final String sourceBranchName = "SOURCE_BRANCH_NAME";
+    static final String targetBranchName = "TARGET_BRANCH_NAME";
     private String branchIncludeFilter = "*";
     private String branchExcludeFilter = "";
     private List<AdditionalParameter> additionalParameters = new ArrayList<>();
@@ -322,30 +327,38 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             //Try to add job properties. If fails do not stop just log warning.
                 parameters.add(new StringParameterDefinition(
                         PipelineTriggerProperty.projectNameParameterKey,
-                        "This will be set by Multibranch Pipeline Plugin",
-                        "Added by Multibranch Pipeline Plugin"));
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
                 parameters.add(new StringParameterDefinition(
                         PipelineTriggerProperty.projectFullNameParameterKey,
-                        "This will be set by Multibranch Pipeline Plugin",
-                        "Added by Multibranch Pipeline Plugin"));
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
+                parameters.add(new StringParameterDefinition(
+                        PipelineTriggerProperty.sourceBranchName,
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
+                parameters.add(new StringParameterDefinition(
+                        PipelineTriggerProperty.targetBranchName,
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
             if (addRunParameters) {
                 parameters.add(new StringParameterDefinition(
                         PipelineTriggerProperty.runNumberParameterKey,
-                        "This will be set by Multibranch Pipeline Plugin",
-                        "Added by Multibranch Pipeline Plugin"));
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
             }
             if (addRunParameters ) {
                 parameters.add(new StringParameterDefinition(
                         PipelineTriggerProperty.runDisplayNameParameterKey,
-                        "This will be set by Multibranch Pipeline Plugin",
-                        "Added by Multibranch Pipeline Plugin"));
+                        "This will be set by MultiBranch Pipeline Plugin",
+                        "Added by MultiBranch Pipeline Plugin"));
             }
             if (additionalParameters != null) {
                 for (AdditionalParameter additionalParameter : additionalParameters) {
                         parameters.add(new StringParameterDefinition(
                                 additionalParameter.getName(),
                                 additionalParameter.getValue(),
-                                "Added by Multibranch Pipeline Plugin"
+                                "Added by MultiBranch Pipeline Plugin"
                         ));
                 }
             }
@@ -357,7 +370,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
                     job.save();
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definitions." +
-                                    " This may affect jobs which are triggered from Multibranch Pipeline Plugin.",
+                                    " This may affect jobs which are triggered from MultiBranch Pipeline Plugin.",
                             ex);
                 }
             }
@@ -382,10 +395,13 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        Also this value will be passed as StringParameterDefinition
      * @param projectFullName Full name of the project.
      *                        Also this value will be passed as StringParameterDefinition
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition.
+     *                          Applicable only for PR jobs
      */
-    private void buildCreateActionJobs(String projectName, String projectFullName) {
+    private void buildCreateActionJobs(String projectName, String projectFullName, String sourceBranchName, String targetBranchName) {
         this.setJobParametersForCreateActionTriggers();
-        this.buildJobs(projectName, projectFullName, null, null, this.getCreateActionJobs());
+        this.buildJobs(projectName, projectFullName, null, null, this.getCreateActionJobs(), sourceBranchName, targetBranchName);
     }
 
     /**
@@ -395,10 +411,13 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        Also this value will be passed as StringParameterDefinition
      * @param projectFullName Full name of the project.
      *                        Also this value will be passed as StringParameterDefinition
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
-    private void buildDeleteActionJobs(String projectName, String projectFullName) {
+    private void buildDeleteActionJobs(String projectName, String projectFullName, String sourceBranchName, String targetBranchName) {
         this.setJobParameterForDeleteActionTriggers();
-        this.buildJobs(projectName, projectFullName, null, null, this.getDeleteActionJobs());
+        this.buildJobs(projectName, projectFullName, null, null, this.getDeleteActionJobs(), sourceBranchName, targetBranchName);
     }
 
     /**
@@ -412,10 +431,13 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      *                        This value will be passed as StringParameterDefinition.
      * @param runDisplayName  Display Name of the upstream build.
      *                        This value will be passed as StringParameterDefinition.
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
-    private void buildActionJobsOnRunDelete(String projectName, String projectFullName, Integer runNumber, String runDisplayName) {
+    private void buildActionJobsOnRunDelete(String projectName, String projectFullName, Integer runNumber, String runDisplayName, String sourceBranchName, String targetBranchName) {
         this.setJobParameterForJobsOnRunDeleteTriggers();
-        this.buildJobs(projectName, projectFullName, runNumber, runDisplayName, this.getActionJobsOnRunDelete());
+        this.buildJobs(projectName, projectFullName, runNumber, runDisplayName, this.getActionJobsOnRunDelete(), sourceBranchName, targetBranchName);
     }
 
 
@@ -430,24 +452,29 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      * @param runDisplayName  Display Name of the upstream build, or null if the upstream trigger is not a Run.
      *                        This value will be passed as StringParameterDefinition.
      * @param jobsToBuild     List of Jobs to build
+     * @param sourceBranchName  Source Branch Name. Also this value will be passed as StringParameterDefinition
+     * @param targetBranchName  Target Branch Name. Also this value will be passed as StringParameterDefinition
+     *                          Applicable only for PR jobs
      */
     private void buildJobs(
             String projectName,
             String projectFullName,
             Integer runNumber,
             String runDisplayName,
-            List<Job> jobsToBuild) {
+            List<Job> jobsToBuild, String sourceBranchName, String targetBranchName) {
         List<ParameterValue> parameterValues = new ArrayList<>();
-        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.projectNameParameterKey, projectName, "Set by Multibranch Pipeline Plugin"));
-        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.projectFullNameParameterKey, projectFullName, "Set by Multibranch Pipeline Plugin"));
+        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.projectNameParameterKey, projectName, "Set by MultiBranch Pipeline Plugin"));
+        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.projectFullNameParameterKey, projectFullName, "Set by MultiBranch Pipeline Plugin"));
+        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.sourceBranchName, sourceBranchName, "Set by MultiBranch Pipeline Plugin"));
+        parameterValues.add(new StringParameterValue(PipelineTriggerProperty.targetBranchName, targetBranchName, "Set by MultiBranch Pipeline Plugin"));
         if (runNumber != null) {
-            parameterValues.add(new StringParameterValue(PipelineTriggerProperty.runNumberParameterKey, runNumber.toString(), "Set by Multibranch Pipeline Plugin"));
+            parameterValues.add(new StringParameterValue(PipelineTriggerProperty.runNumberParameterKey, runNumber.toString(), "Set by MultiBranch Pipeline Plugin"));
         }
         if (runDisplayName != null) {
-            parameterValues.add(new StringParameterValue(PipelineTriggerProperty.runDisplayNameParameterKey, runDisplayName, "Set by Multibranch Pipeline Plugin"));
+            parameterValues.add(new StringParameterValue(PipelineTriggerProperty.runDisplayNameParameterKey, runDisplayName, "Set by MultiBranch Pipeline Plugin"));
         }
         for(AdditionalParameter additionalParameter : this.getAdditionalParameters()) {
-            parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(),"Set by Multibranch Pipeline Plugin"));
+            parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(),"Set by MultiBranch Pipeline Plugin"));
         }
         ParametersAction parametersAction = new ParametersAction(parameterValues);
         for (Job job : jobsToBuild) {
@@ -468,16 +495,17 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         }
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) workflowJob.getParent();
         PipelineTriggerProperty pipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        PullRequestInfo pullRequestInfo = this.getPullRequestInfo(workflowJob);
         if (pipelineTriggerProperty != null) {
             if (checkExcludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
                 LOGGER.log(Level.INFO, "[MultiBranch Action Triggers Plugin] {0} excluded by the Exclude Filter", workflowJob.getName());
             } else if (checkIncludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
                 if (action.equals(PipelineTriggerBuildAction.createPipelineAction))
-                    pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName(), workflowJob.getFullName());
+                    pipelineTriggerProperty.buildCreateActionJobs(workflowJob.getName(), workflowJob.getFullName(), pullRequestInfo.getSourceBranchName(), pullRequestInfo.getTargetBranchName());
                 else if (action.equals(PipelineTriggerBuildAction.deletePipelineAction))
-                    pipelineTriggerProperty.buildDeleteActionJobs(workflowJob.getName(), workflowJob.getFullName());
+                    pipelineTriggerProperty.buildDeleteActionJobs(workflowJob.getName(), workflowJob.getFullName(), pullRequestInfo.getSourceBranchName(), pullRequestInfo.getTargetBranchName());
                 else if (action.equals(PipelineTriggerBuildAction.deleteRunPipelineAction))
-                    pipelineTriggerProperty.buildActionJobsOnRunDelete(workflowJob.getName(), workflowJob.getFullName(), run.getNumber(), run.getDisplayName());
+                    pipelineTriggerProperty.buildActionJobsOnRunDelete(workflowJob.getName(), workflowJob.getFullName(), run.getNumber(), run.getDisplayName(), pullRequestInfo.getSourceBranchName(), pullRequestInfo.getTargetBranchName());
             } else {
                 LOGGER.log(Level.INFO, "[MultiBranch Action Triggers Plugin] {0} not included by the Include Filter", workflowJob.getName());
             }
@@ -657,5 +685,29 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         }
     }
 
+    /**
+     * Get Pull Request related information from workflow job.
+     * @param workflowJob Indexed job
+     * @return PullRequestInfo
+     */
+    public PullRequestInfo getPullRequestInfo(WorkflowJob workflowJob) {
+        BranchJobProperty branchJobProperty = workflowJob.getProperty(BranchJobProperty.class);
+        if(branchJobProperty == null) {
+            LOGGER.fine("BranchJobProperty not found. Returning empty PullRequestInfo");
+            return new PullRequestInfo("","");
+        }
+        Branch branch = branchJobProperty.getBranch();
+        SCMHead scmHead = branch.getHead();
+        if( scmHead instanceof ChangeRequestSCMHead2) {
+            ChangeRequestSCMHead2 changeRequestSCMHead2 = (ChangeRequestSCMHead2) branch.getHead();
+            String sourceBranchName = changeRequestSCMHead2.getOriginName();
+            String targetBranchName = changeRequestSCMHead2.getTarget().getName();
+            return new PullRequestInfo(sourceBranchName, targetBranchName);
+        }
+        else
+        {
+            return new PullRequestInfo(scmHead.getName(),"");
+        }
+    }
 
 }
