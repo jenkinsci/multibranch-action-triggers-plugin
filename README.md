@@ -62,14 +62,17 @@ How It Works
     ![5a](images/matp5a.png)
 
 6. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
-in "Pipeline Create Event" field has the same number of builds with the number of Pipelines. 
+    in "Pipeline Create Event" field has the same number of builds with the number of Pipelines. 
     - When you go to Configuration of the Jobs, you will notice that Build Parameter is defined automatically. 
-    - Branch/Pipeline name value is passed to the job by parameter named "SOURCE_PROJECT_NAME". This parameter will have the
+    - Branch/Pipeline name value is passed to the job by the parameter named "SOURCE_PROJECT_NAME". This parameter will have the
     name of the Pipeline/Branch which is created by Multi Branch Pipeline. For example if you only have master branch
     in your repository, this value will be "master".
-    - Full name of the Branch/Pipeline is passed to the job by parameter named "SOURCE_PROJECT_FULL_NAME". This parameter will have the
+    - Full name of the Branch/Pipeline is passed to the job by the parameter named "SOURCE_PROJECT_FULL_NAME". This parameter will have the
      full name of the Pipeline/Branch which is created by Multi Branch Pipeline. For example if you only have master branch
     in your repository, this value will be "MyMultiBranchPipeline/master".
+    - If the Pipeline/Branch job is type of Pull Request/Merge Request, then two more parameters are passed to the job.
+        - SOURCE_BRANCH_NAME is the source branch of the Pull Request/Merge Request which is created by Multi Branch Pipeline.
+        - TARGET_BRANCH_NAME is the target branch of the Pull Request/Merge Request which is created by Multi Branch Pipeline.
     - You can use this variable for your needs in your scripts/pipelines.
     
     Example screenshots:
@@ -77,6 +80,10 @@ in "Pipeline Create Event" field has the same number of builds with the number o
     ![6a](images/matp6a.png)
     
     ![6b](images/matp6b.png)
+    
+    ![6c](images/matp6c.png)
+    
+    ![6d](images/matp6d.png)
     
 7. Whenever the Multi Branch Pipeline deletes a run (either by deleting the run, 
    or by deleting the complete branch), or whenever a run is deleted manually, 
