@@ -4,8 +4,7 @@ MultiBranch Action Triggers Plugin
 This plugin enables building/triggering other jobs when a Pipeline job is created or deleted,
 or when a Run (also known as Build) is deleted by a Multi Branch Pipeline Job.
 
-Summary
-=======
+# Summary
 Multi Branch Pipeline Jobs are capable of creating/deleting Pipelines depending on the branches in the repository.
 They also remove old runs, depending on the orphaned item strategy configured for the pipeline,
 or when a branch is deleted.
@@ -22,27 +21,26 @@ This plugin enables triggering/building Jobs when a new Pipeline is created or d
 or when a run is deleted.
 
 
-How It Works
-============
-1. Install plugin from Update Center of Jenkins.
+# How It Works
+1.  Install plugin from Update Center of Jenkins.
 
-2. Create your Jobs (Pipeline/FreeStyle) which will be triggered. You can define any name for your jobs.
+2.  Create your Jobs (Pipeline/FreeStyle) which will be triggered. You can define any name for your jobs.
 
-   Example screenshot:
+    Example screenshot:
    
-   ![1a](images/matp1a.png)
+    ![1a](images/matp1a.png)
    
-   ![1b](images/matp1b.png)
+    ![1b](images/matp1b.png)
    
-   ![1c](images/matp1c.png)
+    ![1c](images/matp1c.png)
 
-3. Create your Multi Branch Pipeline 
+3.  Create your Multi Branch Pipeline 
 
     Example screenshot:
     
     ![3a](images/matp3a.png)
 
-4. Define "Pipeline Action Triggers" Jobs at the bottom of the configuration page of the Multi Branch Pipeline.
+4.  Define "Pipeline Action Triggers" Jobs at the bottom of the configuration page of the Multi Branch Pipeline.
     - This fields has Auto-Complete feature.
     - You can define more then one Job. All jobs defined in this fields will be triggered/built in the same time.
     - Do not forget to save configuration.
@@ -55,13 +53,13 @@ How It Works
     
     ![4b](images/matp4b.png)
     
-5. (Optional) Add filtering for triggering Jobs. In default, Trigger Jobs are build for all branches which is
+5.  (Optional) Add filtering for triggering Jobs. In default, Trigger Jobs are build for all branches which is
     discovered by Branch Indexing. In some cases you may need to filter branches on which Trigger Jobs will be build.
     To achieve this you can define both Include and Exclude Filters (wildcard).
     
     ![5a](images/matp5a.png)
 
-6. After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
+6.  After Multi Branch Pipeline indexes the branches and creates Pipelines, you will notice that, Jobs that you defined
     in "Pipeline Create Event" field has the same number of builds with the number of Pipelines. 
     - When you go to Configuration of the Jobs, you will notice that Build Parameter is defined automatically. 
     - Branch/Pipeline name value is passed to the job by the parameter named "SOURCE_PROJECT_NAME". This parameter will have the
@@ -85,39 +83,72 @@ How It Works
     
     ![6d](images/matp6d.png)
     
-7. Whenever the Multi Branch Pipeline deletes a run (either by deleting the run, 
-   or by deleting the complete branch), or whenever a run is deleted manually, 
-   the Jobs that you defined in "Run Delete Event" will be executed. 
-   Additionally to the parameters which are passed on branch creation or deletion,
-   two other parameters ("SOURCE_RUN_NUMBER" and "SOURCE_RUN_DISPLAY_NAME") are passed 
-   to the triggered job(s).
+7.  Whenever the Multi Branch Pipeline deletes a run (either by deleting the run, 
+    or by deleting the complete branch), or whenever a run is deleted manually, 
+    the Jobs that you defined in "Run Delete Event" will be executed. 
+    Additionally, to the parameters which are passed on branch creation or deletion,
+    two other parameters ("SOURCE_RUN_NUMBER" and "SOURCE_RUN_DISPLAY_NAME") are passed 
+    to the triggered job(s).
    
-   Example Screenshots:
+    Example Screenshots:
    
     ![7a](images/matp7a.png)
     
     ![7b](images/matp7b.png)
     
-8. (Optional) Add additional parameters for passing to Triggering Jobs. Parameters which are defined in this section
-   will be automatically defined in Trigger Jobs and values will be passed during the build.
+8.  (Optional) Add additional parameters for passing to Triggering Jobs. Parameters which are defined in this section
+    will be automatically defined in Trigger Jobs and values will be passed during the build.
    
-   Example Screenshots:
+    Example Screenshots:
    
-   ![8a](images/matp8a.png)
+    ![8a](images/matp8a.png)
    
-   ![8b](images/matp8b.png)
+    ![8b](images/matp8b.png)
    
-   
+# Job DSL
+MultiBranch Action Triggers Plugin can be defined by using Jenkins Job DSL Plugin as shown below.
+```shell script
+multibranchPipelineJob('multi-branch-job') {
+    branchSources { // This block is for creating MultiBranch Job. Please check Job DSL Plugin for more details.
+        git {
+            id('123456789') // IMPORTANT: use a constant and unique identifier
+            remote('https://github.com/jenkinsci/multibranch-action-triggers-plugin.git')
+            credentialsId('your-credentials') 
+            includes('*')
+        }
+    }
+    properties{
+        pipelineTriggerProperty{
+            createActionJobsToTrigger('job1, job2') // Comma separated list of Jobs
+            deleteActionJobsToTrigger('job1, job3') // Comma separated list of Jobs
+            actionJobsToTriggerOnRunDelete('job2, job3') // Comma separated list of Jobs
+            branchIncludeFilter('*') // Can bet set to empty string
+            branchExcludeFilter('exclude') // Can bet set to empty string
+            additionalParameters{ // This block is optional.
+                additionalParameter{ // This block can be defined as much as required
+                    name('KEY1')
+                    value('VALUE1')
+                }
+                additionalParameter{
+                    name('KEY2')
+                    value('VALUE2')
+                }
+            }
+        }
+    }
+}
+```
+ 
     
 Reporting Issues
-======
+================
 Please create issue in this repository.
 
 [Create Issue](https://github.com/jenkinsci/multibranch-action-triggers-plugin/issues/new/choose)
 
 
 Thank You!
-=================
+==========
 If you feel your self generous today, you can buy me a coffee : )
 <br>
 Or you can star the project.
