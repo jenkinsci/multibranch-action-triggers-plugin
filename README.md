@@ -106,7 +106,7 @@ or when a run is deleted.
     ![8b](images/matp8b.png)
    
 # Job DSL
-MultiBranch Action Triggers plugin can be defined by using Jenkins Job DSL as shown below.
+MultiBranch Action Triggers Plugin can be defined by using Jenkins Job DSL Plugin as shown below.
 ```shell script
 multibranchPipelineJob('multi-branch-job') {
     branchSources { // This block is for creating MultiBranch Job. Please check Job DSL Plugin for more details.
