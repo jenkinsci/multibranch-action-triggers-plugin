@@ -9,7 +9,6 @@ import hudson.model.FreeStyleProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
-import org.apache.xpath.operations.Or;
 import org.jenkinsci.plugins.github.config.GitHubPluginConfig;
 import org.jenkinsci.plugins.github.config.GitHubServerConfig;
 import org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait;

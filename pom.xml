@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.4</version>
+        <version>4.71</version>
         <relativePath />
     </parent>
     <groupId>io.jenkins.plugins</groupId>
@@ -38,11 +38,8 @@
     </scm>
 
     <properties>
-        <java.level>8</java.level>
-        <java.version>1.8</java.version>
-        <jenkins.version>2.190.1</jenkins.version>
+        <jenkins.version>2.401.3</jenkins.version>
     </properties>
-
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
@@ -61,10 +58,10 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.190.x</artifactId>
-                <version>10</version>
-                <scope>import</scope>
+                <artifactId>bom-2.401.x</artifactId>
+                <version>2745.vc7b_fe4c876fa_</version>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -89,12 +86,10 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-multibranch</artifactId>
-            <version>707.v71c3f0a_6ccdb_</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jackson2-api</artifactId>
-            <version>2.11.1</version>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -107,7 +102,6 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>gitlab-branch-source</artifactId>
-            <version>688.v5fa_356ee8520</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -119,7 +113,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-branch-source</artifactId>
-            <version>2.6.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -166,26 +159,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <minimumJavaVersion>1.8</minimumJavaVersion>
-                    <loggers>
-                        <org.jenkinsci.plugins.workflow.multibranch>FINE</org.jenkinsci.plugins.workflow.multibranch>
-                    </loggers>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>
