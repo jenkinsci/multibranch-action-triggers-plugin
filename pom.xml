@@ -12,9 +12,6 @@
     <version>1.8.7-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>MultiBranch Action Triggers Plugin</name>
-    <description>Enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch
-        Pipeline Job.
-    </description>
     <url>https://github.com/jenkinsci/multibranch-action-triggers-plugin</url>
     <licenses>
         <license>
