@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Enables building/triggering other jobs when a Pipeline job is created or deleted by Multi Branch Pipeline Job.
+</div>
