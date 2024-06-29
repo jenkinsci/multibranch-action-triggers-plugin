@@ -101,7 +101,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>cloudbees-bitbucket-branch-source</artifactId>
-            <version>871.v28d74e8b_4226</version>
+            <version>887.va_d359b_3d2d8d</version>
             <scope>test</scope>
         </dependency>
         <dependency>
