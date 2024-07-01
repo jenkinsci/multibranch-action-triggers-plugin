@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
@@ -46,6 +47,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
     private transient List<Job> createActionJobs = new ArrayList<>();
     private transient List<Job> deleteActionJobs = new ArrayList<>();
     private transient List<Job> actionJobsOnRunDelete = new ArrayList<>();
+    @SuppressFBWarnings(value = "SS_SHOULD_BE_STATIC", justification = "TODO needs triage")
     private final int quitePeriod = 0;
     static final String projectNameParameterKey = "SOURCE_PROJECT_NAME";
     static final String projectFullNameParameterKey = "SOURCE_PROJECT_FULL_NAME";
