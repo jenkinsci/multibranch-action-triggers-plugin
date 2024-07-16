@@ -11,6 +11,7 @@
     <artifactId>multibranch-action-triggers</artifactId>
     <version>${revision}${changelist}</version>
     <name>MultiBranch Action Triggers Plugin</name>
+    <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
     <licenses>
         <license>
