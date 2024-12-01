@@ -367,8 +367,28 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
             if (!parameters.isEmpty()) {
                 try {
-                    ParameterDefinition[] propertiesToAdd = parameters.toArray(new ParameterDefinition[]{});
-                    job.addProperty(new ParametersDefinitionProperty(propertiesToAdd));
+                    ParametersDefinitionProperty jobParameterProperty = (ParametersDefinitionProperty) job.getProperty(ParametersDefinitionProperty.class);
+
+                    // Only add parameters if they don't already exist
+                    if (jobParameterProperty == null) {
+                        job.addProperty(new ParametersDefinitionProperty(parameters));
+                    } else {
+                        boolean parametersChanged = false;
+                        List<ParameterDefinition> jobParameters = new ArrayList<>(jobParameterProperty.getParameterDefinitions());
+
+                        for (ParameterDefinition newParam : parameters) {
+                            if (jobParameters.stream().noneMatch(p -> p.getName().equals(newParam.getName()))) {
+                                parametersChanged = true;
+                                jobParameters.add(newParam);
+                            }
+                        }
+
+                        if (parametersChanged) {
+                            job.removeProperty(ParametersDefinitionProperty.class);
+                            job.addProperty(new ParametersDefinitionProperty(jobParameters));
+                        }
+                    }
+
                     job.save();
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "[MultiBranch Action Triggers Plugin] Could not set String Parameter Definitions." +
